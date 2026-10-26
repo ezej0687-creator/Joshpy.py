@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Python Learning Path{% endblock %}
+{% block content %}
+  <section class="hero">
+    <p class="eyebrow">Learn by doing</p>
+    <h1>Your Python learning path</h1>
+    <p>Start with the foundations, practice each idea, and keep track of your progress.</p>
+    <div class="progress-summary">
+      <strong>{{ completed_count }} of {{ total_lessons }}</strong>
+      <span>lessons completed in this browser</span>
+    </div>
+    <div class="progress-track" aria-label="{{ completed_count }} of {{ total_lessons }} lessons complete">
+      <span style="width: {{ (completed_count / total_lessons * 100) if total_lessons else 0 }}%"></span>
+    </div>
+  </section>
+
+  <section aria-labelledby="modules-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">The curriculum</p>
+        <h2 id="modules-heading">Modules</h2>
+      </div>
+    </div>
+    {% if modules %}
+      <div class="module-grid">
+        {% for module in modules %}
+          <a class="module-card" href="{{ url_for('main.module_detail', slug=module.slug) }}">
+            <span class="module-number">{{ "%02d"|format(loop.index) }}</span>
+            <h3>{{ module.title }}</h3>
+            <p>{{ module.description }}</p>
+            <span class="card-meta">{{ module.lesson_count }} {{ "lesson" if module.lesson_count == 1 else "lessons" }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No modules have been added yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}

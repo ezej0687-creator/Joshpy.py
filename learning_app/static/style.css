@@ -1,0 +1,491 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #202b3c;
+  background: #f6f8fc;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #202b3c;
+  --muted: #66738a;
+  --blue: #365fe3;
+  --blue-dark: #2748bb;
+  --line: #e3e8f1;
+  --surface: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem max(1.25rem, calc((100% - 1100px) / 2));
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.brand {
+  color: var(--blue);
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.site-header nav a,
+.nav-button {
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.92rem;
+  text-decoration: none;
+}
+
+.site-header nav a:hover,
+.nav-button:hover,
+.text-link:hover {
+  color: var(--blue);
+}
+
+.inline-form {
+  display: inline;
+}
+
+.nav-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.page {
+  width: min(100% - 2.5rem, 1000px);
+  min-height: calc(100vh - 150px);
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+.hero {
+  margin-bottom: 4rem;
+  padding: clamp(2rem, 6vw, 4rem);
+  border: 1px solid #e1e8ff;
+  border-radius: 1.25rem;
+  background: linear-gradient(125deg, #eef2ff, #fff 75%);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0.8rem;
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  letter-spacing: -0.045em;
+  line-height: 1.1;
+}
+
+h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.65rem;
+  letter-spacing: -0.025em;
+}
+
+.hero > p:not(.eyebrow),
+.page-intro > p:not(.eyebrow) {
+  max-width: 650px;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.65;
+}
+
+.eyebrow {
+  margin-bottom: 0.65rem;
+  color: var(--blue);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.progress-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.progress-summary strong {
+  font-size: 1.15rem;
+}
+
+.progress-summary span,
+.card-meta,
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.progress-track {
+  height: 0.5rem;
+  margin-top: 0.75rem;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #dfe5f2;
+}
+
+.progress-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.module-card {
+  position: relative;
+  display: block;
+  min-height: 205px;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  text-decoration: none;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.module-card:hover {
+  transform: translateY(-2px);
+  border-color: #b8c7ff;
+}
+
+.module-number {
+  color: #8b99b1;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.module-card h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.module-card p {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.card-meta {
+  position: absolute;
+  bottom: 1.35rem;
+}
+
+.page-intro {
+  margin-bottom: 2rem;
+}
+
+.breadcrumb {
+  margin-bottom: 2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.breadcrumb a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.lesson-list,
+.admin-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+}
+
+.lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-height: 74px;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+}
+
+.lesson-row:last-child {
+  border-bottom: 0;
+}
+
+.lesson-row:hover {
+  background: #f9faff;
+}
+
+.lesson-status {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  place-items: center;
+  border: 1px solid #d6ddeb;
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.lesson-status.is-complete {
+  border-color: #d4f0e2;
+  background: #e9f8f0;
+  color: #16734a;
+}
+
+.lesson-row-title {
+  flex: 1;
+  font-weight: 650;
+}
+
+.row-arrow {
+  color: var(--muted);
+}
+
+.lesson-content {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.lesson-copy {
+  color: #344158;
+  line-height: 1.75;
+  white-space: pre-wrap;
+}
+
+.exercise-panel {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  border: 1px solid #dce5ff;
+  border-radius: 0.9rem;
+  background: #f0f4ff;
+}
+
+.exercise-panel h2 {
+  font-size: 1.2rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0.55rem;
+  background: var(--blue);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--blue-dark);
+}
+
+.button:disabled {
+  background: #6680d5;
+  cursor: default;
+}
+
+.button-secondary {
+  background: #e9edfb;
+  color: var(--blue-dark);
+}
+
+.button-secondary:hover {
+  background: #dce4fb;
+}
+
+.form-card {
+  max-width: 700px;
+  padding: clamp(1.5rem, 5vw, 2.5rem);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.form-card.narrow {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+form label {
+  display: block;
+  margin: 1.25rem 0 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #cfd7e5;
+  border-radius: 0.5rem;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+  line-height: 1.55;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--blue);
+  outline: 3px solid #dce5ff;
+}
+
+.form-card form > .button {
+  margin-top: 1.25rem;
+}
+
+.form-actions,
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.field-help {
+  margin: 0.4rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.text-link {
+  color: var(--blue);
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.admin-list {
+  margin-top: 1.5rem;
+}
+
+.admin-module {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-module:last-child {
+  border-bottom: 0;
+}
+
+.admin-module-heading,
+.admin-lesson-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-module-heading h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.15rem;
+}
+
+.admin-module-heading p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.admin-lesson-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.empty-state {
+  padding: 1.5rem;
+  color: var(--muted);
+}
+
+.flash-list {
+  margin-bottom: 1.5rem;
+}
+
+.flash {
+  padding: 0.8rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.flash-success {
+  background: #e9f8f0;
+  color: #17633f;
+}
+
+.flash-error {
+  background: #fff0ef;
+  color: #9e3028;
+}
+
+.site-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .site-header nav {
+    flex-wrap: wrap;
+    gap: 0.9rem;
+  }
+
+  .page {
+    padding-top: 2rem;
+  }
+}

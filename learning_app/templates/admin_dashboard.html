@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Manage content · Python Learning{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <p class="eyebrow">Administrator</p>
+    <h1>Manage learning content</h1>
+    <p>Add more modules and lessons here as the learning path grows.</p>
+  </section>
+  <div class="action-row">
+    <a class="button" href="{{ url_for('main.create_module') }}">Add module</a>
+    <a class="button button-secondary" href="{{ url_for('main.create_lesson') }}">Add lesson</a>
+  </div>
+  <section class="admin-list">
+    {% for module in modules %}
+      <article class="admin-module">
+        <div class="admin-module-heading">
+          <div>
+            <h2>{{ module.title }}</h2>
+            <p>{{ module.lesson_count }} {{ "lesson" if module.lesson_count == 1 else "lessons" }}</p>
+          </div>
+          <a class="text-link" href="{{ url_for('main.edit_module', module_id=module.id) }}">Edit module</a>
+        </div>
+        <ul class="admin-lesson-list">
+          {% for lesson in lessons_by_module.get(module.id, []) %}
+            <li>
+              <span>{{ lesson.title }}</span>
+              <a class="text-link" href="{{ url_for('main.edit_lesson', lesson_id=lesson.id) }}">Edit</a>
+            </li>
+          {% else %}
+            <li class="muted">No lessons yet.</li>
+          {% endfor %}
+        </ul>
+      </article>
+    {% else %}
+      <p class="empty-state">No modules yet. Add a module to get started.</p>
+    {% endfor %}
+  </section>
+{% endblock %}

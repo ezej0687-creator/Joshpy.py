@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if module else "Add" }} module · Python Learning{% endblock %}
+{% block content %}
+  <section class="form-card">
+    <p class="eyebrow">Content administration</p>
+    <h1>{{ "Edit module" if module else "Add a module" }}</h1>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="title">Module title</label>
+      <input id="title" name="title" maxlength="120" value="{{ module.title if module else '' }}" required>
+      <label for="description">Short description</label>
+      <textarea id="description" name="description" rows="4">{{ module.description if module else '' }}</textarea>
+      <div class="form-actions">
+        <button class="button" type="submit">Save module</button>
+        <a class="text-link" href="{{ url_for('main.admin_dashboard') }}">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

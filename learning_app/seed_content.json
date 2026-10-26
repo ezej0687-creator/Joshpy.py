@@ -1,0 +1,106 @@
+[
+  {
+    "slug": "fundamentals",
+    "title": "Fundamentals",
+    "description": "Start with values, variables, strings, numbers, input, and output.",
+    "lessons": [
+      {
+        "slug": "first-steps",
+        "title": "First steps",
+        "content": "A variable gives a value a name. Python can store text, whole numbers, and decimal numbers.\n\nExample:\nname = \"Ada\"\nage = 12\nprint(f\"Hello, {name}! Next year you will be {age + 1}.\")\n\nThe f before a string lets you put expressions inside braces.",
+        "exercise": "1. Store your name and favorite hobby in variables and print a sentence.\n2. Convert a distance from kilometers to miles (multiply by 0.621371).\n3. Ask for a temperature in Celsius and print its Fahrenheit conversion."
+      }
+    ]
+  },
+  {
+    "slug": "decisions-and-loops",
+    "title": "Decisions and loops",
+    "description": "Make choices with conditions and repeat work with loops.",
+    "lessons": [
+      {
+        "slug": "choose-and-repeat",
+        "title": "Choose and repeat",
+        "content": "Use if, elif, and else to choose which code runs. A for loop repeats over a sequence.\n\nExample:\nscore = 76\nif score >= 70:\n    print(\"You passed\")\nelse:\n    print(\"Keep practicing\")\n\nfor number in range(3):\n    print(number)",
+        "exercise": "1. Ask for an age and label the person as a child, teen, or adult.\n2. Print numbers from 1 to 20 and label each even or odd.\n3. Make a number guessing game with a fixed secret number."
+      }
+    ]
+  },
+  {
+    "slug": "collections",
+    "title": "Collections",
+    "description": "Group related data with lists, dictionaries, sets, and tuples.",
+    "lessons": [
+      {
+        "slug": "grouping-data",
+        "title": "Grouping data",
+        "content": "Lists keep an ordered collection. Dictionaries associate keys with values. Sets keep unique values.\n\nExample:\nshopping = [\"apples\", \"bread\"]\nshopping.append(\"tea\")\nscores = {\"Ari\": 8, \"Bo\": 10}\nprint(shopping)\nprint(scores[\"Ari\"])",
+        "exercise": "1. Make a shopping list, add and remove an item, then print each item.\n2. Make a dictionary of names and phone numbers.\n3. Count how often each word appears in a sentence."
+      }
+    ]
+  },
+  {
+    "slug": "functions",
+    "title": "Functions",
+    "description": "Give reusable behavior a name and split problems into smaller steps.",
+    "lessons": [
+      {
+        "slug": "reusable-behavior",
+        "title": "Reusable behavior",
+        "content": "Functions accept inputs through parameters and can send a result back with return.\n\nExample:\ndef rectangle_area(width, height):\n    return width * height\n\narea = rectangle_area(4, 3)\nprint(area)",
+        "exercise": "1. Write a function that converts Celsius to Fahrenheit.\n2. Write a function that returns the average of a list of numbers.\n3. Split your guessing game into small functions with clear names."
+      }
+    ]
+  },
+  {
+    "slug": "modules-and-errors",
+    "title": "Modules and errors",
+    "description": "Reuse the standard library and handle invalid input clearly.",
+    "lessons": [
+      {
+        "slug": "imports-and-validation",
+        "title": "Imports and input validation",
+        "content": "An import gives you access to code from another module. Use try and except for errors you expect and know how to handle.\n\nExample:\nimport random\n\nprint(random.randint(1, 6))\n\ntry:\n    age = int(input(\"Age: \"))\nexcept ValueError:\n    print(\"Please enter a whole number.\")",
+        "exercise": "1. Import math and calculate a circle's area.\n2. Keep asking until the user enters a valid whole number.\n3. Put a function in a separate file and import it."
+      }
+    ]
+  },
+  {
+    "slug": "files-and-data",
+    "title": "Files and data",
+    "description": "Read and write files, and save structured information as JSON or CSV.",
+    "lessons": [
+      {
+        "slug": "save-and-load",
+        "title": "Save and load data",
+        "content": "Pathlib provides convenient file paths. The json module converts between Python data and JSON text.\n\nExample:\nimport json\nfrom pathlib import Path\n\npath = Path(\"progress.json\")\npath.write_text(json.dumps({\"done\": True}))\ndata = json.loads(path.read_text())\nprint(data)",
+        "exercise": "1. Write a note to a text file, then read it back.\n2. Save a list of completed lessons as JSON.\n3. Read a CSV file with Python's csv module and summarize a column."
+      }
+    ]
+  },
+  {
+    "slug": "object-oriented-python",
+    "title": "Object-oriented Python",
+    "description": "Model related data and behavior with classes and instances.",
+    "lessons": [
+      {
+        "slug": "classes-and-instances",
+        "title": "Classes and instances",
+        "content": "A class describes a kind of object. Each instance stores its own data, and methods describe behavior.\n\nExample:\nclass Book:\n    def __init__(self, title):\n        self.title = title\n        self.checked_out = False\n\n    def check_out(self):\n        self.checked_out = True",
+        "exercise": "1. Add a method that describes a book.\n2. Create a Library class that stores books and finds one by title.\n3. Prevent a checked-out book from being checked out again."
+      }
+    ]
+  },
+  {
+    "slug": "testing",
+    "title": "Testing",
+    "description": "Check that your program behaves as expected with repeatable tests.",
+    "lessons": [
+      {
+        "slug": "test-your-code",
+        "title": "Test your code",
+        "content": "A test calls your code with known inputs and checks the result. Python includes unittest in its standard library.\n\nExample:\nimport unittest\n\nclass AreaTests(unittest.TestCase):\n    def test_rectangle(self):\n        self.assertEqual(4 * 3, 12)\n\nRun tests with: python -m unittest",
+        "exercise": "1. Write tests for a temperature conversion function.\n2. Test your shopping-list or guessing-game behavior.\n3. Make one test fail by changing the code, then restore the correct behavior."
+      }
+    ]
+  }
+]

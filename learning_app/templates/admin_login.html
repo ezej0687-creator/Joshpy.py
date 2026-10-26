@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Admin sign in · Python Learning{% endblock %}
+{% block content %}
+  <section class="form-card narrow">
+    <p class="eyebrow">Content administration</p>
+    <h1>Admin sign in</h1>
+    <p>Set the <code>ADMIN_PASSWORD</code> environment variable before starting the app.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="password">Admin password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button class="button" type="submit">Sign in</button>
+    </form>
+  </section>
+{% endblock %}

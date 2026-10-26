@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit" if lesson else "Add" }} lesson · Python Learning{% endblock %}
+{% block content %}
+  <section class="form-card">
+    <p class="eyebrow">Content administration</p>
+    <h1>{{ "Edit lesson" if lesson else "Add a lesson" }}</h1>
+    {% if not modules %}
+      <p>Create a module before adding a lesson.</p>
+      <a class="button" href="{{ url_for('main.create_module') }}">Add module</a>
+    {% else %}
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="module_id">Module</label>
+        <select id="module_id" name="module_id" required>
+          <option value="">Choose a module</option>
+          {% for module in modules %}
+            <option value="{{ module.id }}"
+              {% if lesson and lesson.module_id == module.id %}selected{% endif %}>
+              {{ module.title }}
+            </option>
+          {% endfor %}
+        </select>
+        <label for="title">Lesson title</label>
+        <input id="title" name="title" maxlength="120" value="{{ lesson.title if lesson else '' }}" required>
+        <label for="content">Lesson content</label>
+        <textarea id="content" name="content" rows="12" aria-describedby="content-help">{{ lesson.content if lesson else '' }}</textarea>
+        <p class="field-help" id="content-help">Plain text is supported. Line breaks are preserved.</p>
+        <label for="exercise">Practice exercises</label>
+        <textarea id="exercise" name="exercise" rows="7">{{ lesson.exercise if lesson else '' }}</textarea>
+        <div class="form-actions">
+          <button class="button" type="submit">Save lesson</button>
+          <a class="text-link" href="{{ url_for('main.admin_dashboard') }}">Cancel</a>
+        </div>
+      </form>
+    {% endif %}
+  </section>
+{% endblock %}

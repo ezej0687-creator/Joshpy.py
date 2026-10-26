@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ module.title }} · Python Learning{% endblock %}
+{% block content %}
+  <p class="breadcrumb"><a href="{{ url_for('main.index') }}">Learning path</a> / Module</p>
+  <section class="page-intro">
+    <p class="eyebrow">Module</p>
+    <h1>{{ module.title }}</h1>
+    <p>{{ module.description }}</p>
+  </section>
+  <section class="lesson-list" aria-label="Lessons">
+    {% for lesson in lessons %}
+      <a class="lesson-row" href="{{ url_for('main.lesson_detail', lesson_id=lesson.id) }}">
+        <span class="lesson-status {{ 'is-complete' if lesson.id in completed_ids else '' }}">
+          {{ "✓" if lesson.id in completed_ids else loop.index }}
+        </span>
+        <span class="lesson-row-title">{{ lesson.title }}</span>
+        <span class="row-arrow" aria-hidden="true">→</span>
+      </a>
+    {% else %}
+      <p class="empty-state">There are no lessons in this module yet.</p>
+    {% endfor %}
+  </section>
+{% endblock %}

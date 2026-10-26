@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}{{ lesson.title }} · Python Learning{% endblock %}
+{% block content %}
+  <p class="breadcrumb">
+    <a href="{{ url_for('main.index') }}">Learning path</a> /
+    <a href="{{ url_for('main.module_detail', slug=lesson.module_slug) }}">{{ lesson.module_title }}</a>
+  </p>
+  <article class="lesson-content">
+    <p class="eyebrow">{{ lesson.module_title }}</p>
+    <h1>{{ lesson.title }}</h1>
+    <div class="lesson-copy">{{ lesson.content }}</div>
+    {% if lesson.exercise %}
+      <section class="exercise-panel">
+        <h2>Practice</h2>
+        <div class="lesson-copy">{{ lesson.exercise }}</div>
+      </section>
+    {% endif %}
+    <form method="post" action="{{ url_for('main.mark_complete', lesson_id=lesson.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button" type="submit" {% if is_completed %}disabled{% endif %}>
+        {{ "Completed" if is_completed else "Mark as complete" }}
+      </button>
+    </form>
+  </article>
+{% endblock %}
