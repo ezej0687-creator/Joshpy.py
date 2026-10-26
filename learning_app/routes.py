@@ -1,33 +1,212 @@
-import hmac
+import hashlib
+import logging
 import re
+import secrets
+import smtplib
+import sqlite3
+import ssl
+import time
 import unicodedata
+from email.message import EmailMessage
 from functools import wraps
+from urllib.parse import urljoin, urlsplit
 
 from flask import (
     Blueprint,
     abort,
     current_app,
     flash,
+    g,
     redirect,
     render_template,
     request,
     session,
     url_for,
 )
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from .database import get_db
 
 bp = Blueprint("main", __name__)
+logger = logging.getLogger(__name__)
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MINIMUM_PASSWORD_LENGTH = 12
+RESET_TOKEN_LIFETIME_SECONDS = 30 * 60
+RESET_REQUEST_INTERVAL_SECONDS = 60
 
 
 def admin_required(view):
     @wraps(view)
     def wrapped_view(**kwargs):
-        if not session.get("is_admin"):
-            return redirect(url_for("main.admin_login"))
+        user = getattr(g, "current_user", None)
+        if user is None or user["role"] != "admin":
+            flash("Sign in with an administrator account to continue.", "error")
+            return redirect(url_for("main.login"))
         return view(**kwargs)
 
     return wrapped_view
+
+
+def login_required(view):
+    @wraps(view)
+    def wrapped_view(**kwargs):
+        if getattr(g, "current_user", None) is None:
+            flash("Sign in to access your learning account.", "error")
+            return redirect(url_for("main.login"))
+        return view(**kwargs)
+
+    return wrapped_view
+
+
+def normalized_email(value):
+    return value.strip().casefold()
+
+
+def validate_password(password):
+    if len(password) < MINIMUM_PASSWORD_LENGTH:
+        return f"Use a password with at least {MINIMUM_PASSWORD_LENGTH} characters."
+    if len(password) > 1024:
+        return "Password is too long."
+    return None
+
+
+def migrate_legacy_progress(user_id):
+    legacy_learner_id = session.get("learner_id")
+    if not legacy_learner_id:
+        return
+    db = get_db()
+    db.execute(
+        """
+        INSERT OR IGNORE INTO user_progress (user_id, lesson_id, completed_at)
+        SELECT ?, lesson_id, completed_at
+        FROM progress
+        WHERE learner_id = ?
+        """,
+        (user_id, legacy_learner_id),
+    )
+    db.commit()
+
+
+def establish_login(user):
+    migrate_legacy_progress(user["id"])
+    session.clear()
+    session["user_id"] = user["id"]
+    session["session_version"] = user["session_version"]
+    session.permanent = True
+
+
+def build_leaderboard():
+    return get_db().execute(
+        """
+        WITH learner_totals AS (
+            SELECT
+                u.id,
+                u.display_name,
+                COUNT(DISTINCT up.lesson_id) AS completed_count
+            FROM users AS u
+            LEFT JOIN user_progress AS up ON up.user_id = u.id
+            WHERE u.role = 'learner'
+            GROUP BY u.id
+        )
+        SELECT
+            id,
+            display_name,
+            completed_count,
+            DENSE_RANK() OVER (ORDER BY completed_count DESC) AS rank
+        FROM learner_totals
+        ORDER BY completed_count DESC, display_name COLLATE NOCASE, id
+        """
+    ).fetchall()
+
+
+def mail_is_configured():
+    configured = all(
+        current_app.config.get(key)
+        for key in ("MAIL_SERVER", "MAIL_DEFAULT_SENDER", "PUBLIC_BASE_URL")
+    )
+    if not configured:
+        return False
+    public_url = urlsplit(current_app.config["PUBLIC_BASE_URL"])
+    local_http = public_url.hostname in {"localhost", "127.0.0.1", "::1"}
+    return (
+        public_url.scheme == "https"
+        or (public_url.scheme == "http" and local_http)
+    ) and bool(public_url.netloc) and not public_url.username and public_url.password is None
+
+
+def send_password_reset_email(user, token):
+    if not mail_is_configured():
+        raise RuntimeError(
+            "Password recovery email is not configured. Set MAIL_SERVER, "
+            "MAIL_DEFAULT_SENDER, and PUBLIC_BASE_URL."
+        )
+
+    reset_path = url_for("main.reset_password", token=token)
+    reset_url = urljoin(
+        f"{current_app.config['PUBLIC_BASE_URL']}/", reset_path.lstrip("/")
+    )
+    message = EmailMessage()
+    message["Subject"] = "Reset your Python Learning password"
+    message["From"] = current_app.config["MAIL_DEFAULT_SENDER"]
+    message["To"] = user["email"]
+    message.set_content(
+        "A password reset was requested for your Python Learning account.\n\n"
+        f"Use this one-time link within 30 minutes:\n{reset_url}\n\n"
+        "If you did not request this, you can ignore this email."
+    )
+
+    with smtplib.SMTP(
+        current_app.config["MAIL_SERVER"],
+        current_app.config["MAIL_PORT"],
+        timeout=15,
+    ) as smtp:
+        if current_app.config["MAIL_USE_TLS"]:
+            smtp.starttls(context=ssl.create_default_context())
+        username = current_app.config.get("MAIL_USERNAME")
+        if username:
+            smtp.login(username, current_app.config.get("MAIL_PASSWORD", ""))
+        smtp.send_message(message)
+
+
+def issue_password_reset(user):
+    db = get_db()
+    now = int(time.time())
+    db.execute("DELETE FROM password_reset_tokens WHERE expires_at <= ?", (now,))
+    recent = db.execute(
+        """
+        SELECT created_at FROM password_reset_tokens
+        WHERE user_id = ? AND created_at > ?
+        ORDER BY created_at DESC LIMIT 1
+        """,
+        (user["id"], now - RESET_REQUEST_INTERVAL_SECONDS),
+    ).fetchone()
+    if recent:
+        return False
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    db.execute(
+        """
+        INSERT INTO password_reset_tokens (token_hash, user_id, created_at, expires_at)
+        VALUES (?, ?, ?, ?)
+        """,
+        (token_hash, user["id"], now, now + RESET_TOKEN_LIFETIME_SECONDS),
+    )
+    db.commit()
+    try:
+        send_password_reset_email(user, token)
+    except (OSError, smtplib.SMTPException, RuntimeError):
+        db.execute("DELETE FROM password_reset_tokens WHERE token_hash = ?", (token_hash,))
+        db.commit()
+        raise
+    db.execute(
+        """
+        DELETE FROM password_reset_tokens
+        WHERE user_id = ? AND token_hash != ?
+        """,
+        (user["id"], token_hash),
+    )
+    db.commit()
 
 
 def make_slug(value):
@@ -47,9 +226,12 @@ def parse_exercises(value):
 
 
 def completed_lesson_ids():
+    user = getattr(g, "current_user", None)
+    if user is None:
+        return set()
     rows = get_db().execute(
-        "SELECT lesson_id FROM progress WHERE learner_id = ?",
-        (session["learner_id"],),
+        "SELECT lesson_id FROM user_progress WHERE user_id = ?",
+        (user["id"],),
     ).fetchall()
     return {row["lesson_id"] for row in rows}
 
@@ -61,6 +243,260 @@ def get_module_or_404(slug):
     if module is None:
         abort(404)
     return module
+
+
+@bp.route("/register", methods=("GET", "POST"))
+def register():
+    if getattr(g, "current_user", None) is not None:
+        return redirect(url_for("main.dashboard"))
+    if request.method == "POST":
+        display_name = request.form.get("display_name", "").strip()
+        email = normalized_email(request.form.get("email", ""))
+        password = request.form.get("password", "")
+        password_confirmation = request.form.get("password_confirmation", "")
+        error = None
+        if not 2 <= len(display_name) <= 60:
+            error = "Display name must be between 2 and 60 characters."
+        elif len(email) > 254 or not EMAIL_PATTERN.fullmatch(email):
+            error = "Enter a valid email address."
+        else:
+            error = validate_password(password)
+            if error is None and password != password_confirmation:
+                error = "The passwords do not match."
+
+        if error:
+            flash(error, "error")
+        else:
+            db = get_db()
+            try:
+                cursor = db.execute(
+                    """
+                    INSERT INTO users (display_name, email, password_hash)
+                    VALUES (?, ?, ?)
+                    """,
+                    (display_name, email, generate_password_hash(password)),
+                )
+                db.commit()
+            except sqlite3.IntegrityError:
+                db.rollback()
+                flash("An account with that email already exists.", "error")
+            else:
+                user = db.execute(
+                    "SELECT * FROM users WHERE id = ?", (cursor.lastrowid,)
+                ).fetchone()
+                establish_login(user)
+                flash("Your account is ready. Welcome!", "success")
+                return redirect(url_for("main.dashboard"))
+    return render_template("register.html")
+
+
+@bp.route("/login", methods=("GET", "POST"))
+def login():
+    if getattr(g, "current_user", None) is not None:
+        if g.current_user["role"] == "admin":
+            return redirect(url_for("main.admin_dashboard"))
+        return redirect(url_for("main.dashboard"))
+    if request.method == "POST":
+        email = normalized_email(request.form.get("email", ""))
+        password = request.form.get("password", "")
+        user = get_db().execute(
+            "SELECT * FROM users WHERE email = ?", (email,)
+        ).fetchone()
+        if (
+            user is not None
+            and len(password) <= 1024
+            and check_password_hash(user["password_hash"], password)
+        ):
+            establish_login(user)
+            flash("Signed in.", "success")
+            if user["role"] == "admin":
+                return redirect(url_for("main.admin_dashboard"))
+            return redirect(url_for("main.dashboard"))
+        flash("Sign-in failed. Check your email and password.", "error")
+    return render_template("login.html")
+
+
+@bp.post("/logout")
+@login_required
+def logout():
+    session.clear()
+    session["learner_id"] = secrets.token_urlsafe(24)
+    flash("Signed out.", "success")
+    return redirect(url_for("main.index"))
+
+
+@bp.get("/admin/login")
+def admin_login():
+    return redirect(url_for("main.login"))
+
+
+@bp.get("/dashboard")
+@login_required
+def dashboard():
+    db = get_db()
+    modules = db.execute(
+        """
+        SELECT
+            m.*,
+            COUNT(DISTINCT l.id) AS lesson_count,
+            COUNT(DISTINCT up.lesson_id) AS completed_count
+        FROM modules AS m
+        LEFT JOIN lessons AS l ON l.module_id = m.id
+        LEFT JOIN user_progress AS up
+            ON up.lesson_id = l.id AND up.user_id = ?
+        GROUP BY m.id
+        ORDER BY m.sort_order, m.id
+        """,
+        (g.current_user["id"],),
+    ).fetchall()
+    total_lessons = sum(module["lesson_count"] for module in modules)
+    completed_count = len(completed_lesson_ids())
+    leaderboard = build_leaderboard()
+    user_rank = next(
+        (
+            row["rank"]
+            for row in leaderboard
+            if row["id"] == g.current_user["id"]
+        ),
+        None,
+    )
+    return render_template(
+        "dashboard.html",
+        modules=modules,
+        total_lessons=total_lessons,
+        completed_count=completed_count,
+        user_rank=user_rank,
+    )
+
+
+@bp.get("/leaderboard")
+@login_required
+def leaderboard():
+    rows = build_leaderboard()
+    return render_template(
+        "leaderboard.html",
+        rows=rows,
+        total_lessons=get_db().execute("SELECT COUNT(*) FROM lessons").fetchone()[0],
+    )
+
+
+@bp.route("/account/password", methods=("GET", "POST"))
+@login_required
+def change_password():
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirmation = request.form.get("password_confirmation", "")
+        user = g.current_user
+        stored_hash = get_db().execute(
+            "SELECT password_hash FROM users WHERE id = ?", (user["id"],)
+        ).fetchone()["password_hash"]
+        if not check_password_hash(stored_hash, current_password):
+            flash("Your current password is incorrect.", "error")
+        elif (error := validate_password(new_password)) is not None:
+            flash(error, "error")
+        elif new_password != confirmation:
+            flash("The new passwords do not match.", "error")
+        elif check_password_hash(stored_hash, new_password):
+            flash("Choose a password different from your current password.", "error")
+        else:
+            db = get_db()
+            db.execute(
+                """
+                UPDATE users
+                SET password_hash = ?, session_version = session_version + 1
+                WHERE id = ?
+                """,
+                (generate_password_hash(new_password), user["id"]),
+            )
+            db.execute(
+                "DELETE FROM password_reset_tokens WHERE user_id = ?", (user["id"],)
+            )
+            db.commit()
+            session.clear()
+            flash("Password changed. Please sign in again.", "success")
+            return redirect(url_for("main.login"))
+    return render_template("change_password.html")
+
+
+@bp.route("/forgot-password", methods=("GET", "POST"))
+def forgot_password():
+    if request.method == "POST":
+        if not mail_is_configured():
+            flash(
+                "Password recovery email is not configured. Contact the site administrator.",
+                "error",
+            )
+            return render_template("forgot_password.html")
+        email = normalized_email(request.form.get("email", ""))
+        if len(email) <= 254 and EMAIL_PATTERN.fullmatch(email):
+            user = get_db().execute(
+                "SELECT * FROM users WHERE email = ?", (email,)
+            ).fetchone()
+            if user is not None:
+                try:
+                    issue_password_reset(user)
+                except (OSError, smtplib.SMTPException, RuntimeError):
+                    logger.exception("Could not send a password reset email")
+        flash(
+            "If an account matches that email, a reset link can be sent. If you do not receive one, contact the site administrator.",
+            "success",
+        )
+        return render_template("forgot_password.html")
+    return render_template("forgot_password.html")
+
+
+@bp.route("/reset-password/<token>", methods=("GET", "POST"))
+def reset_password(token):
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    db = get_db()
+    reset = db.execute(
+        """
+        SELECT u.*, t.expires_at
+        FROM password_reset_tokens AS t
+        JOIN users AS u ON u.id = t.user_id
+        WHERE t.token_hash = ?
+        """,
+        (token_hash,),
+    ).fetchone()
+    if reset is None or reset["expires_at"] <= int(time.time()):
+        if reset is not None:
+            db.execute(
+                "DELETE FROM password_reset_tokens WHERE token_hash = ?",
+                (token_hash,),
+            )
+            db.commit()
+        flash("That reset link is invalid or expired. Request a new one.", "error")
+        return redirect(url_for("main.forgot_password"))
+
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        confirmation = request.form.get("password_confirmation", "")
+        error = validate_password(password)
+        if error:
+            flash(error, "error")
+        elif password != confirmation:
+            flash("The passwords do not match.", "error")
+        elif check_password_hash(reset["password_hash"], password):
+            flash("Choose a password different from your current password.", "error")
+        else:
+            db.execute(
+                """
+                UPDATE users
+                SET password_hash = ?, session_version = session_version + 1
+                WHERE id = ?
+                """,
+                (generate_password_hash(password), reset["id"]),
+            )
+            db.execute(
+                "DELETE FROM password_reset_tokens WHERE user_id = ?",
+                (reset["id"],),
+            )
+            db.commit()
+            session.clear()
+            flash("Password reset. Sign in with your new password.", "success")
+            return redirect(url_for("main.login"))
+    return render_template("reset_password.html")
 
 
 @bp.get("/")
@@ -82,6 +518,7 @@ def index():
         modules=modules,
         completed_count=len(done),
         total_lessons=total_lessons,
+        has_account=getattr(g, "current_user", None) is not None,
     )
 
 
@@ -129,43 +566,28 @@ def python_runner():
 
 
 @bp.post("/lessons/<int:lesson_id>/complete")
+@login_required
 def mark_complete(lesson_id):
     db = get_db()
     if db.execute("SELECT 1 FROM lessons WHERE id = ?", (lesson_id,)).fetchone() is None:
         abort(404)
     db.execute(
         """
-        INSERT OR IGNORE INTO progress (learner_id, lesson_id)
+        INSERT OR IGNORE INTO user_progress (user_id, lesson_id)
         VALUES (?, ?)
         """,
-        (session["learner_id"], lesson_id),
+        (g.current_user["id"], lesson_id),
     )
     db.commit()
     flash("Lesson marked as complete.", "success")
     return redirect(url_for("main.lesson_detail", lesson_id=lesson_id))
 
 
-@bp.route("/admin/login", methods=("GET", "POST"))
-def admin_login():
-    if session.get("is_admin"):
-        return redirect(url_for("main.admin_dashboard"))
-    if request.method == "POST":
-        expected_password = current_app.config.get("ADMIN_PASSWORD")
-        submitted_password = request.form.get("password", "")
-        if expected_password and hmac.compare_digest(
-            submitted_password.encode("utf-8"), expected_password.encode("utf-8")
-        ):
-            session["is_admin"] = True
-            flash("Signed in.", "success")
-            return redirect(url_for("main.admin_dashboard"))
-        flash("Sign-in failed. Check the configured admin password.", "error")
-    return render_template("admin_login.html")
-
-
 @bp.post("/admin/logout")
 @admin_required
 def admin_logout():
-    session.pop("is_admin", None)
+    session.clear()
+    session["learner_id"] = secrets.token_urlsafe(24)
     flash("Signed out.", "success")
     return redirect(url_for("main.index"))
 
@@ -193,7 +615,36 @@ def admin_dashboard():
         "admin_dashboard.html",
         modules=modules,
         lessons_by_module=lessons_by_module,
+        leaderboard=build_leaderboard(),
+        learner_count=db.execute(
+            "SELECT COUNT(*) FROM users WHERE role = 'learner'"
+        ).fetchone()[0],
     )
+
+
+@bp.get("/admin/users")
+@admin_required
+def admin_users():
+    users = get_db().execute(
+        """
+        SELECT
+            u.id,
+            u.display_name,
+            u.email,
+            u.created_at,
+            u.role,
+            COUNT(DISTINCT up.lesson_id) AS completed_count,
+            DENSE_RANK() OVER (
+                PARTITION BY u.role
+                ORDER BY COUNT(DISTINCT up.lesson_id) DESC
+            ) AS rank
+        FROM users AS u
+        LEFT JOIN user_progress AS up ON up.user_id = u.id
+        GROUP BY u.id
+        ORDER BY u.role DESC, completed_count DESC, u.display_name COLLATE NOCASE
+        """
+    ).fetchall()
+    return render_template("admin_users.html", users=users)
 
 
 @bp.route("/admin/modules/new", methods=("GET", "POST"))

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}My dashboard · Python Learning{% endblock %}
+{% block content %}
+  <section class="hero">
+    <p class="eyebrow">Your personal dashboard</p>
+    <h1>Welcome, {{ current_user.display_name }}</h1>
+    <p>Your learning progress is saved to your account and follows you when you sign in on another browser.</p>
+    <div class="progress-summary">
+      <strong>{{ completed_count }} of {{ total_lessons }}</strong>
+      <span>lessons completed</span>
+    </div>
+    <div class="progress-track" aria-label="{{ completed_count }} of {{ total_lessons }} lessons complete">
+      <span style="width: {{ (completed_count / total_lessons * 100) if total_lessons else 0 }}%"></span>
+    </div>
+    {% if user_rank %}
+      <p class="rank-note">You are ranked #{{ user_rank }} on the learner leaderboard.</p>
+    {% endif %}
+  </section>
+  <section aria-labelledby="progress-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Keep going</p>
+        <h2 id="progress-heading">Your modules</h2>
+      </div>
+      <a class="text-link" href="{{ url_for('main.leaderboard') }}">View learner leaderboard →</a>
+    </div>
+    <div class="module-grid">
+      {% for module in modules %}
+        <a class="module-card" href="{{ url_for('main.module_detail', slug=module.slug) }}">
+          <span class="module-number">{{ "%02d"|format(loop.index) }}</span>
+          <h3>{{ module.title }}</h3>
+          <p>{{ module.completed_count }} of {{ module.lesson_count }} lessons complete</p>
+          <span class="card-meta">{{ "Complete" if module.lesson_count and module.completed_count == module.lesson_count else "Continue module" }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+{% endblock %}

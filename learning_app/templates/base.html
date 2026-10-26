@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
     <title>{% block title %}Python Learning{% endblock %}</title>
     {% block head_extra %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -14,12 +15,24 @@
         <a href="{{ url_for('main.index') }}">Learning path</a>
         {% if is_admin %}
           <a href="{{ url_for('main.admin_dashboard') }}">Manage content</a>
+          <a href="{{ url_for('main.admin_users') }}">Learners</a>
+          <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+          <a href="{{ url_for('main.change_password') }}">Password</a>
           <form class="inline-form" method="post" action="{{ url_for('main.admin_logout') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="nav-button" type="submit">Sign out</button>
           </form>
+        {% elif current_user %}
+          <a href="{{ url_for('main.dashboard') }}">My dashboard</a>
+          <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+          <a href="{{ url_for('main.change_password') }}">Password</a>
+          <form class="inline-form" method="post" action="{{ url_for('main.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="nav-button" type="submit">Sign out</button>
+          </form>
         {% else %}
-          <a href="{{ url_for('main.admin_login') }}">Admin</a>
+          <a href="{{ url_for('main.login') }}">Sign in</a>
+          <a href="{{ url_for('main.register') }}">Register</a>
         {% endif %}
       </nav>
     </header>

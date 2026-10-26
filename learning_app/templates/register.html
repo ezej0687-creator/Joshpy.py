@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Create account · Python Learning{% endblock %}
+{% block content %}
+  <section class="form-card narrow">
+    <p class="eyebrow">Start learning</p>
+    <h1>Create your account</h1>
+    <p>Your display name appears on the learner leaderboard. Your email is private and used to sign in and recover your account.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="display_name">Display name</label>
+      <input id="display_name" name="display_name" maxlength="60" autocomplete="nickname" required>
+      <label for="email">Email address</label>
+      <input id="email" name="email" type="email" maxlength="254" autocomplete="email" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" minlength="12" maxlength="1024" autocomplete="new-password" required>
+      <label for="password_confirmation">Confirm password</label>
+      <input id="password_confirmation" name="password_confirmation" type="password" minlength="12" maxlength="1024" autocomplete="new-password" required>
+      <button class="button" type="submit">Create account</button>
+    </form>
+    <p class="form-note">Already registered? <a href="{{ url_for('main.login') }}">Sign in</a>.</p>
+  </section>
+{% endblock %}

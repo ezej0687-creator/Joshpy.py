@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Learner leaderboard · Python Learning{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <p class="eyebrow">Learning together</p>
+    <h1>Learner leaderboard</h1>
+    <p>Rankings are based on completed lessons. Only display names and lesson counts are shown; email addresses are private.</p>
+  </section>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr><th scope="col">Rank</th><th scope="col">Learner</th><th scope="col">Lessons complete</th><th scope="col">Progress</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="{{ 'current-user-row' if row.id == current_user.id else '' }}">
+            <td>#{{ row.rank }}</td>
+            <th scope="row">{{ row.display_name }}{% if row.id == current_user.id %} <span class="muted">(you)</span>{% endif %}</th>
+            <td>{{ row.completed_count }}</td>
+            <td>{{ "%.0f"|format(row.completed_count / total_lessons * 100 if total_lessons else 0) }}%</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">No learners have registered yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

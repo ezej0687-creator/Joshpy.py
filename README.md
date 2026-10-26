@@ -14,25 +14,62 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Set an admin password and a secret key before starting:
+Set the first admin's email and password plus a stable secret key before
+starting. The first administrator account is created from these settings if the
+database does not already contain an administrator:
 
 ```bash
-export ADMIN_PASSWORD='choose-a-local-admin-password'
+export ADMIN_EMAIL='admin@example.com'
+export ADMIN_PASSWORD='choose-a-strong-admin-password'
+export ADMIN_DISPLAY_NAME='Site Administrator'
 export SECRET_KEY="$(python -c 'import secrets; print(secrets.token_hex(32))')"
 flask --app learning_app run --debug
 ```
 
-On Windows PowerShell, set the variables with `$env:ADMIN_PASSWORD = "..."` and
-`$env:SECRET_KEY = "..."` before running the Flask command.
+On Windows PowerShell, set the variables with `$env:ADMIN_EMAIL = "..."`,
+`$env:ADMIN_PASSWORD = "..."`, and `$env:SECRET_KEY = "..."` before running the
+Flask command.
 
 Open <http://127.0.0.1:5000>. The administrator sign-in is at
 <http://127.0.0.1:5000/admin/login>.
 
+The admin sign-in page is <http://127.0.0.1:5000/login>; `/admin/login`
+redirects there for compatibility.
+
 The SQLite database is created at `instance/learning_path.db` and seeded with
-the starter learning path on first run. It persists your content between runs.
-Progress is saved per browser using a signed cookie, so it does not require
-learner accounts. Changing browsers or clearing cookies starts a separate
-progress record.
+the starter learning path on first run. It persists your content and registered
+accounts between runs. Existing anonymous lesson progress is retained and
+attached to an account when that browser registers or signs in.
+
+## Accounts and learner progress
+
+Learners can register with a display name, email, and password. Passwords are
+at least 12 characters and are stored as Werkzeug password hashes; neither
+admins nor the database store readable passwords. Learners get a personal
+dashboard, can change their password, and can see the leaderboard. The
+leaderboard is visible only after sign-in and shows display names and
+completed-lesson counts, never email addresses. Admins can see registered
+users' names, email addresses, join dates, and progress at
+**Manage content → Learners**.
+
+Password-reset links are single-use and expire after 30 minutes. To enable
+forgot-password for learners and administrators, configure an SMTP sender and
+a canonical public URL before starting the app:
+
+```bash
+export MAIL_SERVER='smtp.example.com'
+export MAIL_PORT='587'
+export MAIL_USERNAME='smtp-account'
+export MAIL_PASSWORD='smtp-password'
+export MAIL_USE_TLS='true'
+export MAIL_DEFAULT_SENDER='Python Learning <no-reply@example.com>'
+export PUBLIC_BASE_URL='https://learning.example.com'
+```
+
+`MAIL_USERNAME` and `MAIL_PASSWORD` can be omitted if the SMTP server does not
+require authentication. Keep mail credentials and `SECRET_KEY` out of source
+control. If SMTP is not configured, the app explains that account recovery is
+unavailable instead of pretending a reset email was sent.
 
 ## Add learning content
 
@@ -64,6 +101,7 @@ reference material while expanding the web app's starter content.
 
 ## Security note
 
-The admin pages require `ADMIN_PASSWORD`. Keep `SECRET_KEY` private and stable
-when running the app so sessions remain valid. The Flask debug server is for
-local development only; do not expose it as a production server.
+Use strong admin and SMTP credentials. Keep `SECRET_KEY` private and stable
+when running the app so sessions remain valid. Set `COOKIE_SECURE=true` when
+serving the site over HTTPS. The Flask debug server is for local development
+only; use a production WSGI server and HTTPS before exposing the app publicly.

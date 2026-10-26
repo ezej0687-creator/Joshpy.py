@@ -4,10 +4,15 @@
   <section class="hero">
     <p class="eyebrow">Learn by doing</p>
     <h1>Your Python learning path</h1>
-    <p>Start with the foundations, practice each idea, and keep track of your progress.</p>
+    <p>Start with the foundations, practice each idea, and build your Python skills one module at a time.</p>
     <div class="progress-summary">
-      <strong>{{ completed_count }} of {{ total_lessons }}</strong>
-      <span>lessons completed in this browser</span>
+      {% if has_account %}
+        <strong>{{ completed_count }} of {{ total_lessons }}</strong>
+        <span>lessons completed on your account · <a href="{{ url_for('main.dashboard') }}">Open my dashboard</a></span>
+      {% else %}
+        <strong>{{ total_lessons }} lessons</strong>
+        <span><a href="{{ url_for('main.register') }}">Create an account</a> to save progress and join the leaderboard.</span>
+      {% endif %}
     </div>
     <div class="progress-track" aria-label="{{ completed_count }} of {{ total_lessons }} lessons complete">
       <span style="width: {{ (completed_count / total_lessons * 100) if total_lessons else 0 }}%"></span>

@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 
 from flask import current_app, g
+from werkzeug.security import generate_password_hash
 
 
 def get_db():
@@ -48,8 +49,76 @@ def init_db():
             completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (learner_id, lesson_id)
         );
+
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE COLLATE NOCASE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'learner'
+                CHECK (role IN ('learner', 'admin')),
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            session_version INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS user_progress (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+            completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, lesson_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_user_progress_lesson
+            ON user_progress(lesson_id);
+        CREATE INDEX IF NOT EXISTS idx_reset_tokens_user
+            ON password_reset_tokens(user_id);
         """
     )
+    admin_email = (current_app.config.get("ADMIN_EMAIL") or "").strip().casefold()
+    admin_password = current_app.config.get("ADMIN_PASSWORD") or ""
+    if bool(admin_email) != bool(admin_password):
+        raise RuntimeError(
+            "Set both ADMIN_EMAIL and ADMIN_PASSWORD to bootstrap the first admin account."
+        )
+    if admin_password and len(admin_password) < 12:
+        raise RuntimeError(
+            "ADMIN_PASSWORD must contain at least 12 characters for the first admin account."
+        )
+    if (
+        admin_email
+        and admin_password
+        and db.execute("SELECT 1 FROM users WHERE role = 'admin' LIMIT 1").fetchone()
+        is None
+    ):
+        existing_email = db.execute(
+            "SELECT role FROM users WHERE email = ?", (admin_email,)
+        ).fetchone()
+        if existing_email is not None:
+            raise RuntimeError(
+                "ADMIN_EMAIL already belongs to a non-admin account; configure "
+                "a different email for the initial administrator."
+            )
+        db.execute(
+            """
+            INSERT INTO users
+                (display_name, email, password_hash, role)
+            VALUES (?, ?, ?, 'admin')
+            """,
+            (
+                current_app.config.get("ADMIN_DISPLAY_NAME", "Administrator"),
+                admin_email,
+                generate_password_hash(admin_password),
+            ),
+        )
+        db.commit()
+
     seed_file = Path(__file__).with_name("seed_content.json")
     seed_modules = json.loads(seed_file.read_text(encoding="utf-8"))
 

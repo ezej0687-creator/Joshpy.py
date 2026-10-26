@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Learner accounts · Python Learning{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <p class="eyebrow">Administrator</p>
+    <h1>Learner accounts</h1>
+    <p>Review account details and learning progress. Passwords are securely hashed and are never visible to administrators.</p>
+  </section>
+  <div class="table-scroll">
+    <table class="data-table">
+      <thead>
+        <tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Lessons complete</th><th scope="col">Rank</th><th scope="col">Joined</th></tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <th scope="row">{{ user.display_name }}</th>
+            <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
+            <td>{{ user.role|title }}</td>
+            <td>{{ user.completed_count }}</td>
+            <td>{% if user.role == "learner" %}#{{ user.rank }}{% else %}—{% endif %}</td>
+            <td>{{ user.created_at }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6">No accounts have registered yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

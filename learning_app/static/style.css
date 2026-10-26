@@ -465,6 +465,22 @@ h2 {
   margin: 0 auto;
 }
 
+.form-card > p:not(.eyebrow),
+.form-note {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.form-note {
+  margin: 1rem 0 0;
+}
+
+.form-note a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
 form label {
   display: block;
   margin: 1.25rem 0 0.45rem;
@@ -523,6 +539,92 @@ select:focus {
 
 .admin-list {
   margin-top: 1.5rem;
+}
+
+.admin-ranking {
+  margin-top: 2.5rem;
+}
+
+.ranking-list {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  list-style: none;
+}
+
+.ranking-list li {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.ranking-list li:last-child {
+  border-bottom: 0;
+}
+
+.rank-number {
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.ranking-list li > span:last-child {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.rank-note {
+  margin: 1.25rem 0 0;
+  color: var(--blue-dark);
+  font-weight: 700;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.data-table thead {
+  background: #f2f5fb;
+  color: #4e5c72;
+  font-size: 0.82rem;
+}
+
+.data-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.data-table tbody th {
+  font-weight: 700;
+}
+
+.data-table a {
+  color: var(--blue);
+}
+
+.current-user-row {
+  background: #f0f4ff;
 }
 
 .admin-module {
