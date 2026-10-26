@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="referrer" content="no-referrer">
+    <title>Isolated Python runner</title>
+  </head>
+  <body>
+    <script>
+      const pyodideVersion = "0.27.7";
+      let pyodide;
+      let runQueue = Promise.resolve();
+
+      function send(message) {
+        window.parent.postMessage(message, "*");
+      }
+
+      async function loadRuntime(requestId) {
+        if (pyodide) {
+          return pyodide;
+        }
+
+        send({ type: "status", status: "loading", requestId });
+        const baseUrl = `https://cdn.jsdelivr.net/pyodide/v${pyodideVersion}/full/`;
+        const script = document.createElement("script");
+        script.src = `${baseUrl}pyodide.js`;
+        document.head.append(script);
+        await new Promise((resolve, reject) => {
+          script.addEventListener("load", resolve, { once: true });
+          script.addEventListener("error", () => reject(new Error("Could not load the browser Python runtime. Check your internet connection and try again.")), { once: true });
+        });
+        pyodide = await window.loadPyodide({ indexURL: baseUrl });
+        return pyodide;
+      }
+
+      async function runCode(requestId, code, input) {
+        try {
+          const runtime = await loadRuntime(requestId);
+          const output = [];
+          runtime.setStdout({ batched: (text) => output.push(text) });
+          runtime.setStderr({ batched: (text) => output.push(text) });
+          const inputLines = input === "" ? [] : input.split(/\r?\n/);
+          let nextInputLine = 0;
+          runtime.setStdin({
+            stdin: () => nextInputLine < inputLines.length ? inputLines[nextInputLine++] : null,
+            isatty: true,
+          });
+          send({ type: "status", status: "running", requestId });
+          let result;
+          try {
+            result = await runtime.runPythonAsync(code);
+            if (result !== undefined && result !== null) {
+              output.push(String(result));
+            }
+          } finally {
+            if (result && typeof result.destroy === "function") {
+              result.destroy();
+            }
+          }
+          send({ type: "result", requestId, output: output.join(""), isError: false });
+        } catch (error) {
+          send({
+            type: "result",
+            requestId,
+            output: error instanceof Error ? error.message : String(error),
+            isError: true,
+          });
+        }
+      }
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== window.parent) {
+          return;
+        }
+        const message = event.data;
+        if (message && message.type === "ping") {
+          send({ type: "ready" });
+          return;
+        }
+        if (
+          !message ||
+          message.type !== "run" ||
+          typeof message.requestId !== "string" ||
+          typeof message.code !== "string" ||
+          typeof message.input !== "string"
+        ) {
+          return;
+        }
+        runQueue = runQueue.then(() =>
+          runCode(message.requestId, message.code, message.input)
+        );
+      });
+    </script>
+  </body>
+</html>

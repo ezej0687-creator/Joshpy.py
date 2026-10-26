@@ -38,8 +38,18 @@ progress record.
 
 Sign in as administrator, then choose **Manage content**. Create modules first,
 then add lessons to them. You can edit existing module and lesson titles,
-descriptions, and lesson text. Lesson content is plain text; line breaks are
-preserved.
+descriptions, and lesson text. Enter one exercise per line; each exercise gets
+its own Python editor. Lesson content is plain text; line breaks are preserved.
+The browser editor uses Python syntax highlighting, saves drafts in the current
+browser, runs Python in a sandboxed browser frame, and can download a `.py`
+file. An optional program-input box supplies lines to Python's `input()`. The
+code is not sent to or executed on the Flask server. The first run downloads
+the Pyodide runtime from jsDelivr and CodeMirror is loaded from cdnjs; an
+internet connection is needed for the full editor and Python runner.
+
+The first module, **Command Line: Your Powerful Toolbox**, introduces safe
+terminal basics and how to run downloaded Python files from your own terminal.
+The web editor does not execute shell commands.
 
 The app code lives in `learning_app/`:
 
@@ -47,6 +57,7 @@ The app code lives in `learning_app/`:
 - `database.py` defines and seeds the SQLite tables.
 - `templates/` contains the page layouts.
 - `static/style.css` contains the presentation.
+- `static/practice.js` stores exercise drafts and connects editors to the isolated browser runtime.
 
 The original runnable Python examples remain in `lessons/`; they are useful
 reference material while expanding the web app's starter content.

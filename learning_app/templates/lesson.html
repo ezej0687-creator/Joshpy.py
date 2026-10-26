@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block title %}{{ lesson.title }} · Python Learning{% endblock %}
+{% block head_extra %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css">
+{% endblock %}
 {% block content %}
   <p class="breadcrumb">
     <a href="{{ url_for('main.index') }}">Learning path</a> /
@@ -9,12 +12,30 @@
     <p class="eyebrow">{{ lesson.module_title }}</p>
     <h1>{{ lesson.title }}</h1>
     <div class="lesson-copy">{{ lesson.content }}</div>
-    {% if lesson.exercise %}
-      <section class="exercise-panel">
-        <h2>Practice</h2>
-        <div class="lesson-copy">{{ lesson.exercise }}</div>
-      </section>
-    {% endif %}
+    <section class="practice-section" aria-labelledby="practice-heading">
+      <h2 id="practice-heading">Practice in Python</h2>
+      <p class="practice-intro">Each exercise has its own Python editor. Your draft saves in this browser, and code runs in an isolated browser frame—not on the app server. Use <strong>Download .py</strong> to run a solution in your own terminal.</p>
+      {% for exercise in exercises %}
+        <section class="exercise-panel" data-practice-editor data-lesson-id="{{ lesson.id }}" data-exercise-number="{{ loop.index }}" data-storage-key="python-learning-draft-v1-{{ lesson.id }}-{{ loop.index }}">
+          <h3>Exercise {{ loop.index }}</h3>
+          <p class="lesson-copy">{{ exercise }}</p>
+          <textarea class="python-editor" aria-label="Python editor for exercise {{ loop.index }}" placeholder="# Write your Python solution here" spellcheck="false"></textarea>
+          <label class="program-input-label" for="program-input-{{ lesson.id }}-{{ loop.index }}">Program input (optional)</label>
+          <textarea class="program-input" id="program-input-{{ lesson.id }}-{{ loop.index }}" data-program-input rows="2" placeholder="Enter input() values here, one per line"></textarea>
+          <div class="editor-toolbar">
+            <span class="editor-status" data-editor-status aria-live="polite">Drafts save automatically in this browser.</span>
+            <div class="editor-actions">
+              <button class="button button-small" type="button" data-run-python>Run Python</button>
+              <button class="button button-small button-secondary" type="button" data-download-python>Download .py</button>
+              <button class="text-button" type="button" data-clear-draft>Clear draft</button>
+            </div>
+          </div>
+          <pre class="python-output" data-python-output aria-live="polite" hidden></pre>
+        </section>
+      {% else %}
+        <p class="empty-state">Practice exercises will be added soon.</p>
+      {% endfor %}
+    </section>
     <form method="post" action="{{ url_for('main.mark_complete', lesson_id=lesson.id) }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="button" type="submit" {% if is_completed %}disabled{% endif %}>
@@ -22,4 +43,17 @@
       </button>
     </form>
   </article>
+  <iframe
+    class="python-runner-frame"
+    src="{{ url_for('main.python_runner') }}"
+    sandbox="allow-scripts"
+    title="Isolated browser Python runtime"
+    aria-hidden="true"
+    tabindex="-1"
+  ></iframe>
+{% endblock %}
+{% block scripts %}
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js"></script>
+  <script defer src="{{ url_for('static', filename='practice.js') }}"></script>
 {% endblock %}

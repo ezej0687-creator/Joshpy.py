@@ -37,6 +37,15 @@ def make_slug(value):
     return slug
 
 
+def parse_exercises(value):
+    exercises = []
+    for line in value.splitlines():
+        prompt = re.sub(r"^\s*(?:\d+[.)]\s*|[-*]\s*)", "", line).strip()
+        if prompt:
+            exercises.append(prompt)
+    return exercises
+
+
 def completed_lesson_ids():
     rows = get_db().execute(
         "SELECT lesson_id FROM progress WHERE learner_id = ?",
@@ -109,8 +118,14 @@ def lesson_detail(lesson_id):
     return render_template(
         "lesson.html",
         lesson=lesson,
+        exercises=parse_exercises(lesson["exercise"]),
         is_completed=lesson_id in completed_lesson_ids(),
     )
+
+
+@bp.get("/python-runner")
+def python_runner():
+    return render_template("python_runner.html")
 
 
 @bp.post("/lessons/<int:lesson_id>/complete")
@@ -257,7 +272,7 @@ def create_lesson():
         module_id = request.form.get("module_id", type=int)
         title = request.form.get("title", "").strip()
         content = request.form.get("content", "").strip()
-        exercise = request.form.get("exercise", "").strip()
+        exercise = "\n".join(parse_exercises(request.form.get("exercise", "")))
         slug = make_slug(title)
         module_exists = module_id is not None and db.execute(
             "SELECT 1 FROM modules WHERE id = ?", (module_id,)
@@ -292,7 +307,12 @@ def create_lesson():
                 db.commit()
                 flash("Lesson created.", "success")
                 return redirect(url_for("main.admin_dashboard"))
-    return render_template("lesson_form.html", lesson=None, modules=modules)
+    return render_template(
+        "lesson_form.html",
+        lesson=None,
+        modules=modules,
+        lesson_exercises="",
+    )
 
 
 @bp.route("/admin/lessons/<int:lesson_id>/edit", methods=("GET", "POST"))
@@ -311,7 +331,7 @@ def edit_lesson(lesson_id):
         module_id = request.form.get("module_id", type=int)
         title = request.form.get("title", "").strip()
         content = request.form.get("content", "").strip()
-        exercise = request.form.get("exercise", "").strip()
+        exercise = "\n".join(parse_exercises(request.form.get("exercise", "")))
         slug = make_slug(title)
         module_exists = module_id is not None and db.execute(
             "SELECT 1 FROM modules WHERE id = ?", (module_id,)
@@ -342,5 +362,8 @@ def edit_lesson(lesson_id):
             flash("Lesson updated.", "success")
             return redirect(url_for("main.admin_dashboard"))
     return render_template(
-        "lesson_form.html", lesson=lesson, modules=modules
+        "lesson_form.html",
+        lesson=lesson,
+        modules=modules,
+        lesson_exercises="\n".join(parse_exercises(lesson["exercise"])),
     )

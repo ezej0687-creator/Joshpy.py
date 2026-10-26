@@ -50,10 +50,10 @@ def init_db():
         );
         """
     )
+    seed_file = Path(__file__).with_name("seed_content.json")
+    seed_modules = json.loads(seed_file.read_text(encoding="utf-8"))
 
     if db.execute("SELECT COUNT(*) FROM modules").fetchone()[0] == 0:
-        seed_file = Path(__file__).with_name("seed_content.json")
-        seed_modules = json.loads(seed_file.read_text(encoding="utf-8"))
         with db:
             for module_order, module in enumerate(seed_modules, start=1):
                 cursor = db.execute(
@@ -80,7 +80,41 @@ def init_db():
                             lesson["slug"],
                             lesson["title"],
                             lesson["content"],
-                            lesson["exercise"],
+                            "\n".join(lesson["exercises"]),
                             lesson_order,
                         ),
                     )
+
+    command_module = seed_modules[0]
+    if db.execute(
+        "SELECT 1 FROM modules WHERE slug = ?", (command_module["slug"],)
+    ).fetchone() is None:
+        with db:
+            db.execute("UPDATE modules SET sort_order = sort_order + 1")
+            cursor = db.execute(
+                """
+                INSERT INTO modules (slug, title, description, sort_order)
+                VALUES (?, ?, ?, 0)
+                """,
+                (
+                    command_module["slug"],
+                    command_module["title"],
+                    command_module["description"],
+                ),
+            )
+            for lesson_order, lesson in enumerate(command_module["lessons"], start=1):
+                db.execute(
+                    """
+                    INSERT INTO lessons
+                        (module_id, slug, title, content, exercise, sort_order)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        cursor.lastrowid,
+                        lesson["slug"],
+                        lesson["title"],
+                        lesson["content"],
+                        "\n".join(lesson["exercises"]),
+                        lesson_order,
+                    ),
+                )

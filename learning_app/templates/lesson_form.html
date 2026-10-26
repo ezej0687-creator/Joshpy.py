@@ -26,7 +26,8 @@
         <textarea id="content" name="content" rows="12" aria-describedby="content-help">{{ lesson.content if lesson else '' }}</textarea>
         <p class="field-help" id="content-help">Plain text is supported. Line breaks are preserved.</p>
         <label for="exercise">Practice exercises</label>
-        <textarea id="exercise" name="exercise" rows="7">{{ lesson.exercise if lesson else '' }}</textarea>
+        <textarea id="exercise" name="exercise" rows="7" aria-describedby="exercise-help">{{ lesson_exercises if lesson else '' }}</textarea>
+        <p class="field-help" id="exercise-help">Enter one exercise per line. Each exercise gets its own Python editor in the lesson.</p>
         <div class="form-actions">
           <button class="button" type="submit">Save lesson</button>
           <a class="text-link" href="{{ url_for('main.admin_dashboard') }}">Cancel</a>
