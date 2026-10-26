@@ -23,6 +23,9 @@ def create_app(test_config=None):
         MAIL_USE_TLS=os.environ.get("MAIL_USE_TLS", "true").lower() == "true",
         MAIL_DEFAULT_SENDER=os.environ.get("MAIL_DEFAULT_SENDER"),
         PUBLIC_BASE_URL=os.environ.get("PUBLIC_BASE_URL", "").rstrip("/"),
+        OPENAI_API_KEY=os.environ.get("OPENAI_API_KEY"),
+        OPENAI_MODEL=os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+        MAX_CONTENT_LENGTH=256 * 1024,
         PERMANENT_SESSION_LIFETIME=timedelta(days=14),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
@@ -41,7 +44,10 @@ def create_app(test_config=None):
         session.setdefault("learner_id", secrets.token_urlsafe(24))
 
         if request.method == "POST":
-            submitted_token = request.form.get("csrf_token", "")
+            submitted_token = (
+                request.headers.get("X-CSRF-Token")
+                or request.form.get("csrf_token", "")
+            )
             expected_token = session.get("csrf_token", "")
             if not expected_token or not secrets.compare_digest(
                 submitted_token, expected_token

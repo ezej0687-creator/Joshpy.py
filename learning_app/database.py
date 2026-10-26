@@ -75,10 +75,18 @@ def init_db():
             expires_at INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS tutor_requests (
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at INTEGER NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_user_progress_lesson
             ON user_progress(lesson_id);
         CREATE INDEX IF NOT EXISTS idx_reset_tokens_user
             ON password_reset_tokens(user_id);
+        CREATE INDEX IF NOT EXISTS idx_tutor_requests_user_created
+            ON tutor_requests(user_id, created_at);
         """
     )
     admin_email = (current_app.config.get("ADMIN_EMAIL") or "").strip().casefold()

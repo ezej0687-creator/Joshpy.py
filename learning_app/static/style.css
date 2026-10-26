@@ -460,6 +460,128 @@ h2 {
   background: var(--surface);
 }
 
+.tutor-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+
+.tutor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.tutor-heading h2 {
+  margin-bottom: 0;
+  font-size: 1.2rem;
+}
+
+.tutor-heading .eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.tutor-context,
+.tutor-setup {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.tutor-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  background: #f9faff;
+}
+
+.tutor-setup {
+  background: #fff8e8;
+  color: #76521a;
+}
+
+.tutor-messages {
+  display: grid;
+  max-height: 55vh;
+  min-height: 250px;
+  align-content: start;
+  gap: 0.85rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.tutor-welcome {
+  max-width: 80%;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.9rem 0.9rem 0.9rem 0.2rem;
+  background: #eef2ff;
+  color: #344158;
+  line-height: 1.6;
+}
+
+.chat-message {
+  width: fit-content;
+  max-width: 85%;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat-message-user {
+  justify-self: end;
+  border-bottom-right-radius: 0.2rem;
+  background: var(--blue);
+  color: #fff;
+}
+
+.chat-message-assistant {
+  justify-self: start;
+  border-bottom-left-radius: 0.2rem;
+  background: #eef2ff;
+  color: #344158;
+}
+
+.chat-message-error {
+  background: #fff0ef;
+  color: #9e3028;
+}
+
+.tutor-form {
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.tutor-form label {
+  margin-top: 0;
+}
+
+.tutor-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.tutor-form-footer .field-help {
+  margin: 0;
+}
+
+.tutor-prompt {
+  margin: 1.25rem 0;
+}
+
 .form-card.narrow {
   max-width: 460px;
   margin: 0 auto;
@@ -714,5 +836,23 @@ select:focus {
   .editor-toolbar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .tutor-heading,
+  .tutor-form-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tutor-heading,
+  .tutor-form,
+  .tutor-messages {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .tutor-welcome,
+  .chat-message {
+    max-width: 95%;
   }
 }

@@ -52,6 +52,31 @@ completed-lesson counts, never email addresses. Admins can see registered
 users' names, email addresses, join dates, and progress at
 **Manage content → Learners**.
 
+## AI tutor
+
+Signed-in learners can use **AI tutor** in the navigation for course-wide Python
+guidance, or open the tutor from a lesson to include that lesson's material and
+exercises as context. The tutor uses the OpenAI API from the Flask server; the
+API key is never sent to the browser. Conversations remain in the current page
+only and are not saved by this app. Messages and selected lesson text are sent
+to OpenAI to generate replies. Avoid entering personal or sensitive information,
+and review OpenAI's current data and usage policies before enabling the feature.
+API usage may incur charges on the account that owns the key. Each account is
+limited to 50 tutor requests in a rolling 24-hour window.
+
+Set an OpenAI API key before starting the app:
+
+```bash
+export OPENAI_API_KEY='your-openai-api-key'
+```
+
+In Windows PowerShell, use `$env:OPENAI_API_KEY = "your-openai-api-key"`.
+
+The tutor uses `gpt-4o-mini` by default. To choose another model supported by
+the Chat Completions API, set `OPENAI_MODEL`. Restart the Flask app after
+changing either setting. Without an API key the app continues to run, but the
+tutor UI displays setup instructions and chat requests are unavailable.
+
 Password-reset links are single-use and expire after 30 minutes. To enable
 forgot-password for learners and administrators, configure an SMTP sender and
 a canonical public URL before starting the app:

@@ -12,6 +12,11 @@
     <p class="eyebrow">{{ lesson.module_title }}</p>
     <h1>{{ lesson.title }}</h1>
     <div class="lesson-copy">{{ lesson.content }}</div>
+    {% if current_user %}
+      <p class="tutor-prompt">
+        <a class="text-link" href="{{ url_for('main.tutor', lesson_id=lesson.id) }}">Ask the AI tutor about this lesson →</a>
+      </p>
+    {% endif %}
     <section class="practice-section" aria-labelledby="practice-heading">
       <h2 id="practice-heading">Practice in Python</h2>
       <p class="practice-intro">Each exercise has its own Python editor. Your draft saves in this browser, and code runs in an isolated browser frame—not on the app server. Use <strong>Download .py</strong> to run a solution in your own terminal.</p>

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}AI tutor · Python Learning{% endblock %}
+{% block content %}
+  <section class="page-intro">
+    <p class="eyebrow">Your learning companion</p>
+    <h1>Ask the AI tutor</h1>
+    <p>Get step-by-step help with Python concepts and the course. The tutor uses the course outline and, when selected, the lesson material to guide its answers.</p>
+  </section>
+  <section
+    class="tutor-card"
+    data-tutor-chat
+    data-csrf="{{ csrf_token() }}"
+    data-lesson-id="{{ selected_lesson.id if selected_lesson else '' }}"
+    aria-labelledby="tutor-heading"
+  >
+    <div class="tutor-heading">
+      <div>
+        <p class="eyebrow">Conversation</p>
+        <h2 id="tutor-heading">A patient Python guide</h2>
+      </div>
+      {% if tutor_available %}
+        <button class="button button-secondary button-small" type="button" data-clear-chat>New conversation</button>
+      {% endif %}
+    </div>
+    {% if selected_lesson %}
+      <p class="tutor-context">Lesson focus: <strong>{{ selected_lesson.module_title }} · {{ selected_lesson.title }}</strong>
+        <a class="text-link" href="{{ url_for('main.tutor') }}">Change to course-wide help</a>
+      </p>
+    {% else %}
+      <p class="tutor-context">
+        Course-wide guidance
+        {% if lessons %}
+          <a class="text-link" href="{{ url_for('main.lesson_detail', lesson_id=lessons[0].id) }}">Open the first lesson</a>
+          to ask about it specifically.
+        {% endif %}
+      </p>
+    {% endif %}
+    <div class="tutor-messages" data-chat-messages role="log" aria-live="polite" aria-relevant="additions">
+      <p class="tutor-welcome" data-chat-welcome>Hi {{ current_user.display_name }}! What Python topic or exercise would you like help with? I’ll guide you with hints and clear steps.</p>
+    </div>
+    {% if tutor_available %}
+      <form class="tutor-form" data-chat-form>
+        <label for="tutor-question">Your question</label>
+        <textarea id="tutor-question" data-chat-input rows="3" maxlength="4000" placeholder="Ask a Python question or describe where you got stuck…" required></textarea>
+        <div class="tutor-form-footer">
+          <span class="field-help" data-chat-status>AI replies may be inaccurate. Avoid sharing personal or sensitive information. Conversations are not saved after you leave this page. Limit: 50 questions per day.</span>
+          <button class="button" type="submit" data-send-chat>Send question</button>
+        </div>
+      </form>
+    {% else %}
+      <p class="tutor-setup" role="status">The AI tutor is not configured yet. Ask the site administrator to set the <code>OPENAI_API_KEY</code> environment variable and restart the app.</p>
+    {% endif %}
+  </section>
+{% endblock %}
+{% block scripts %}
+  {% if tutor_available %}
+    <script defer src="{{ url_for('static', filename='tutor.js') }}"></script>
+  {% endif %}
+{% endblock %}

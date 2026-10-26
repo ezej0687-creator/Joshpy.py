@@ -15,6 +15,7 @@
     {% if user_rank %}
       <p class="rank-note">You are ranked #{{ user_rank }} on the learner leaderboard.</p>
     {% endif %}
+    <p><a class="button" href="{{ url_for('main.tutor') }}">Ask the AI tutor</a></p>
   </section>
   <section aria-labelledby="progress-heading">
     <div class="section-heading">

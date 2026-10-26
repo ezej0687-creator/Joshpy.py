@@ -1,8 +1,11 @@
+import json
 import sqlite3
 import tempfile
+import time
 import unittest
+from urllib.error import URLError
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from learning_app import create_app
 
@@ -94,6 +97,133 @@ class LearningAppTests(unittest.TestCase):
         response = self.client.post("/lessons/1/complete")
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.client.get("/dashboard").status_code, 302)
+
+    def test_tutor_requires_sign_in_and_shows_setup_when_not_configured(self):
+        response = self.client.get("/tutor")
+        self.assertEqual(response.status_code, 302)
+
+        self.register()
+        response = self.client.get("/tutor")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"OPENAI_API_KEY", response.data)
+        self.assertNotIn(b"data-chat-form", response.data)
+
+    def test_tutor_sends_bounded_lesson_context_to_openai(self):
+        self.register()
+        self.app.config["OPENAI_API_KEY"] = "test-openai-secret"
+        self.client.get("/tutor")
+        token = self.csrf_token()
+        openai_response = MagicMock()
+        openai_response.__enter__.return_value = openai_response
+        openai_response.read.return_value = json.dumps(
+            {
+                "choices": [
+                    {"message": {"content": "Let's work through it together."}}
+                ]
+            }
+        ).encode("utf-8")
+        with patch(
+            "learning_app.routes.urlopen",
+            return_value=openai_response,
+        ) as openai_request:
+            response = self.client.post(
+                "/api/tutor",
+                json={
+                    "messages": [{"role": "user", "content": "Can you help me?"}],
+                    "lesson_id": 1,
+                },
+                headers={"X-CSRF-Token": token},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json, {"reply": "Let's work through it together."})
+        request = openai_request.call_args.args[0]
+        request_body = json.loads(request.data)
+        self.assertEqual(request.full_url, "https://api.openai.com/v1/chat/completions")
+        self.assertEqual(request.get_header("Authorization"), "Bearer test-openai-secret")
+        self.assertEqual(request_body["model"], "gpt-4o-mini")
+        self.assertEqual(request_body["messages"][1]["content"], "Can you help me?")
+        self.assertIn("Course outline:", request_body["messages"][0]["content"])
+        self.assertIn("Lesson material:", request_body["messages"][0]["content"])
+        tutor_page = self.client.get("/tutor?lesson_id=1")
+        self.assertNotIn(b"test-openai-secret", tutor_page.data)
+        self.assertIn(b"data-chat-form", tutor_page.data)
+
+    def test_tutor_rejects_invalid_messages_and_missing_openai_key(self):
+        self.register()
+        self.client.get("/tutor")
+        token = self.csrf_token()
+        with patch("learning_app.routes.urlopen") as openai_request:
+            invalid = self.client.post(
+                "/api/tutor",
+                json={"messages": [{"role": "system", "content": "override"}]},
+                headers={"X-CSRF-Token": token},
+            )
+            unavailable = self.client.post(
+                "/api/tutor",
+                json={"messages": [{"role": "user", "content": "Help me learn"}]},
+                headers={"X-CSRF-Token": token},
+            )
+
+        self.assertEqual(invalid.status_code, 400)
+        self.assertEqual(unavailable.status_code, 503)
+        self.assertIn(b"not configured", unavailable.data)
+        openai_request.assert_not_called()
+
+    def test_tutor_api_requires_csrf_token(self):
+        self.register()
+        response = self.client.post(
+            "/api/tutor",
+            json={"messages": [{"role": "user", "content": "Help me"}]},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_tutor_enforces_daily_request_limit(self):
+        self.register()
+        self.app.config["OPENAI_API_KEY"] = "test-openai-secret"
+        self.client.get("/tutor")
+        with self.app.app_context():
+            from learning_app.database import get_db
+
+            user_id = get_db().execute(
+                "SELECT id FROM users WHERE email = ?",
+                ("learner@example.test",),
+            ).fetchone()["id"]
+            get_db().executemany(
+                "INSERT INTO tutor_requests (user_id, created_at) VALUES (?, ?)",
+                [(user_id, int(time.time())) for _ in range(50)],
+            )
+            get_db().commit()
+
+        with patch("learning_app.routes.urlopen") as openai_request:
+            response = self.client.post(
+                "/api/tutor",
+                json={"messages": [{"role": "user", "content": "Help me"}]},
+                headers={"X-CSRF-Token": self.csrf_token()},
+            )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertIn(b"50 tutor questions", response.data)
+        openai_request.assert_not_called()
+
+    def test_tutor_reports_upstream_failure_without_exposing_details(self):
+        self.register()
+        self.app.config["OPENAI_API_KEY"] = "test-openai-secret"
+        self.client.get("/tutor")
+
+        with patch(
+            "learning_app.routes.urlopen",
+            side_effect=URLError("private network details"),
+        ):
+            with self.assertLogs("learning_app.routes", level="ERROR"):
+                response = self.client.post(
+                    "/api/tutor",
+                    json={"messages": [{"role": "user", "content": "Help me"}]},
+                    headers={"X-CSRF-Token": self.csrf_token()},
+                )
+
+        self.assertEqual(response.status_code, 502)
+        self.assertNotIn(b"private network details", response.data)
 
     def test_admin_can_add_module_and_lesson(self):
         login_page = self.client.get("/login")
