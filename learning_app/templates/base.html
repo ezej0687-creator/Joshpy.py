@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="referrer" content="no-referrer">
-    <title>{% block title %}Python Learning{% endblock %}</title>
+    <title>{% block title %}Joshtech{% endblock %}</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
     {% block head_extra %}{% endblock %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="{{ url_for('main.index') }}">Python Learning</a>
+      <a class="brand" href="{{ url_for('main.index') }}">Joshtech</a>
       <nav aria-label="Main navigation">
         {% if is_admin %}
           <a href="{{ url_for('main.admin_dashboard') }}">Manage content</a>

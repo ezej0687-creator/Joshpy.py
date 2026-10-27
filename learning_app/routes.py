@@ -154,11 +154,11 @@ def send_password_reset_email(user, token):
         f"{current_app.config['PUBLIC_BASE_URL']}/", reset_path.lstrip("/")
     )
     message = EmailMessage()
-    message["Subject"] = "Reset your Python Learning password"
+    message["Subject"] = "Reset your Joshtech password"
     message["From"] = current_app.config["MAIL_DEFAULT_SENDER"]
     message["To"] = user["email"]
     message.set_content(
-        "A password reset was requested for your Python Learning account.\n\n"
+        "A password reset was requested for your Joshtech account.\n\n"
         f"Use this one-time link within 30 minutes:\n{reset_url}\n\n"
         "If you did not request this, you can ignore this email."
     )
@@ -279,7 +279,7 @@ def build_tutor_system_message(lesson):
         )
 
     return (
-        "You are the Python Learning app's patient, encouraging Python tutor. "
+        "You are the Joshtech app's patient, encouraging Python tutor. "
         "Help learners progress through the course below and answer Python "
         "questions accurately. Explain concepts in small steps, ask guiding "
         "questions, and encourage the learner to try code. Do not immediately "

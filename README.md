@@ -1,4 +1,4 @@
-# Python Learning Web App
+# Joshtech Web App
 
 A small, extendable Flask app for learning Python. Learners can browse modules,
 open lessons, and track completed lessons. An administrator can add and edit
@@ -87,7 +87,7 @@ export MAIL_PORT='587'
 export MAIL_USERNAME='smtp-account'
 export MAIL_PASSWORD='smtp-password'
 export MAIL_USE_TLS='true'
-export MAIL_DEFAULT_SENDER='Python Learning <no-reply@example.com>'
+export MAIL_DEFAULT_SENDER='Joshtech <no-reply@example.com>'
 export PUBLIC_BASE_URL='https://learning.example.com'
 ```
 
