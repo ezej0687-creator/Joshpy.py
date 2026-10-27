@@ -103,6 +103,27 @@ def establish_login(user):
     session.permanent = True
 
 
+def get_adjacent_lessons(lesson_id):
+    """Return (prev, next, index, total) for a lesson."""
+    db = get_db()
+    all_lessons = db.execute(
+        """
+        SELECT l.id, l.title
+        FROM lessons AS l
+        JOIN modules AS m ON m.id = l.module_id
+        ORDER BY m.sort_order, m.id, l.sort_order, l.id
+        """
+    ).fetchall()
+    ids = [row["id"] for row in all_lessons]
+    try:
+        idx = ids.index(lesson_id)
+    except ValueError:
+        return None, None, None, len(ids)
+    prev = all_lessons[idx - 1] if idx > 0 else None
+    nxt = all_lessons[idx + 1] if idx < len(all_lessons) - 1 else None
+    return prev, nxt, idx + 1, len(all_lessons)
+
+
 def find_next_lesson(user_id):
     """Return the next incomplete lesson for a user, or None if all done."""
     row = get_db().execute(
@@ -848,11 +869,16 @@ def lesson_detail(lesson_id):
     ).fetchone()
     if lesson is None:
         abort(404)
+    prev_lesson, next_lesson, lesson_index, lesson_total = get_adjacent_lessons(lesson_id)
     return render_template(
         "lesson.html",
         lesson=lesson,
         exercises=parse_exercises(lesson["exercise"]),
         is_completed=lesson_id in completed_lesson_ids(),
+        prev_lesson=prev_lesson,
+        next_lesson=next_lesson,
+        lesson_index=lesson_index,
+        lesson_total=lesson_total,
     )
 
 

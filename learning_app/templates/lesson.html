@@ -92,6 +92,39 @@
         {{ "Completed" if is_completed else "Mark as complete" }}
       </button>
     </form>
+
+    <nav class="lesson-nav" aria-label="Lesson navigation">
+      {% if prev_lesson %}
+        <a class="lesson-nav-link lesson-nav-prev" href="{{ url_for('main.lesson_detail', lesson_id=prev_lesson.id) }}">
+          <span class="lesson-nav-label">← Previous</span>
+          <span class="lesson-nav-title">{{ prev_lesson.title }}</span>
+        </a>
+      {% else %}
+        <span class="lesson-nav-link lesson-nav-prev lesson-nav-disabled">
+          <span class="lesson-nav-label">← Previous</span>
+          <span class="lesson-nav-title">You're at the start</span>
+        </span>
+      {% endif %}
+
+      {% if lesson_index %}
+        <span class="lesson-nav-position">
+          Lesson {{ lesson_index }} of {{ lesson_total }}
+        </span>
+      {% endif %}
+
+      {% if next_lesson %}
+        <a class="lesson-nav-link lesson-nav-next" href="{{ url_for('main.lesson_detail', lesson_id=next_lesson.id) }}">
+          <span class="lesson-nav-label">Next →</span>
+          <span class="lesson-nav-title">{{ next_lesson.title }}</span>
+        </a>
+      {% else %}
+        <span class="lesson-nav-link lesson-nav-next lesson-nav-disabled">
+          <span class="lesson-nav-label">Next →</span>
+          <span class="lesson-nav-title">You're at the end</span>
+        </span>
+      {% endif %}
+    </nav>
+
   </article>
 
   <iframe
