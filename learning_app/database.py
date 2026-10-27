@@ -87,6 +87,29 @@ def init_db():
             ON password_reset_tokens(user_id);
         CREATE INDEX IF NOT EXISTS idx_tutor_requests_user_created
             ON tutor_requests(user_id, created_at);
+
+        CREATE TABLE IF NOT EXISTS lesson_exercises (
+            id INTEGER PRIMARY KEY,
+            lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+            slug TEXT NOT NULL,
+            title TEXT NOT NULL,
+            prompt TEXT NOT NULL,
+            starter_code TEXT NOT NULL DEFAULT '',
+            tests_json TEXT NOT NULL DEFAULT '[]',
+            hint TEXT DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(lesson_id, slug)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_lesson_exercises_lesson
+            ON lesson_exercises(lesson_id);
+
+        CREATE TABLE IF NOT EXISTS user_exercise_results (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            exercise_id INTEGER NOT NULL REFERENCES lesson_exercises(id) ON DELETE CASCADE,
+            passed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, exercise_id)
+        );
         """
     )
     admin_email = (current_app.config.get("ADMIN_EMAIL") or "").strip().casefold()
