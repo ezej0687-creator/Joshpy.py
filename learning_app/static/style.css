@@ -1119,3 +1119,199 @@ textarea {
     max-width: 95%;
   }
 }
+
+/* ===== Single-terminal layout for lessons ===== */
+
+.exercise-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--s-6) 0;
+  display: grid;
+  gap: var(--s-4);
+}
+
+.exercise-item {
+  padding: var(--s-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.exercise-number {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--s-2);
+}
+
+.exercise-prompt {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+/* Terminal window */
+
+.terminal-window {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: #1a1a1a;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  margin-top: var(--s-5);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-4);
+  background: #232323;
+  border-bottom: 1px solid #2e2e2e;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.terminal-dots span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #3a3a3a;
+}
+
+.terminal-dots span:nth-child(1) { background: #ff5f57; }
+.terminal-dots span:nth-child(2) { background: #febc2e; }
+.terminal-dots span:nth-child(3) { background: #28c840; }
+
+.terminal-title {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: #b0b0b0;
+  letter-spacing: 0.02em;
+}
+
+.terminal-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.terminal-actions .button {
+  background: #2d2d2d;
+  color: #e6e6e6;
+  border: 1px solid #3a3a3a;
+  font-size: 0.8rem;
+  padding: var(--s-1) var(--s-3);
+}
+
+.terminal-actions .button:hover {
+  background: #383838;
+  border-color: #4a4a4a;
+  box-shadow: none;
+}
+
+.terminal-actions .button-secondary {
+  background: transparent;
+  color: #b0b0b0;
+}
+
+.terminal-actions .button-secondary:hover {
+  background: #2d2d2d;
+  color: #e6e6e6;
+}
+
+.terminal-actions .text-button {
+  color: #8a8a8a;
+  font-size: 0.75rem;
+  padding: var(--s-1) var(--s-2);
+}
+
+.terminal-actions .text-button:hover {
+  color: #e6e6e6;
+}
+
+.terminal-body {
+  padding: var(--s-4);
+  background: #1a1a1a;
+}
+
+.terminal-body .CodeMirror {
+  height: 220px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: #1f1f1f !important;
+  color: #e6edf7;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.terminal-body .CodeMirror-gutters {
+  border-right: 1px solid #2a2a2a;
+  background: #1f1f1f !important;
+}
+
+.terminal-body .CodeMirror-linenumber {
+  color: #5a5a5a;
+}
+
+.terminal-body .CodeMirror-cursor {
+  border-left: 2px solid #ffffff;
+}
+
+.terminal-input-details {
+  margin-top: var(--s-3);
+  color: #b0b0b0;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.terminal-input-details summary {
+  cursor: pointer;
+  padding: var(--s-1) 0;
+  user-select: none;
+}
+
+.terminal-input-details summary:hover {
+  color: #e6e6e6;
+}
+
+.terminal-input-details .program-input {
+  margin-top: var(--s-2);
+  background: #1f1f1f;
+  color: #e6edf7;
+  border-color: #2e2e2e;
+  font: 0.85rem/1.5 var(--font-mono);
+}
+
+.terminal-input-details .program-input:focus {
+  border-color: #4a4a4a;
+  box-shadow: none;
+}
+
+.terminal-body .editor-toolbar {
+  margin-top: var(--s-3);
+}
+
+.terminal-body .editor-status {
+  color: #8a8a8a;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+}
+
+.terminal-body .python-output {
+  margin-top: var(--s-3);
+  border: 1px solid #2e2e2e;
+  background: #0f0f0f;
+  color: #d4dae6;
+  font: 0.85rem/1.6 var(--font-mono);
+}
