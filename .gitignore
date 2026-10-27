@@ -8,17 +8,13 @@ __pycache__/
 .venv/
 venv/
 ENV/
-
 # Flask instance (DB, secrets)
 instance/
 *.db
 *.sqlite3
-
 # Env / secrets
 .env
-
 # OS
 .DS_Store
-
 # Copilot agent scratch
 .git/refs/agents/
