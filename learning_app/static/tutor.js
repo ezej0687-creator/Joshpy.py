@@ -15,8 +15,14 @@
     bubble.className = `chat-message chat-message-${role}${className ? ` ${className}` : ""}`;
     bubble.setAttribute("aria-label", role === "user" ? "Your message" : "Tutor reply");
     bubble.textContent = content;
+
+    const nearBottom =
+      messagesElement.scrollHeight - messagesElement.scrollTop - messagesElement.clientHeight < 100;
+
     messagesElement.append(bubble);
-    messagesElement.scrollTop = messagesElement.scrollHeight;
+    if (nearBottom || role === "user") {
+      messagesElement.scrollTop = messagesElement.scrollHeight;
+    }
   }
 
   function resetConversation() {
