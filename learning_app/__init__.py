@@ -86,12 +86,21 @@ def create_app(test_config=None):
                 session["csrf_token"] = secrets.token_urlsafe(32)
             return session["csrf_token"]
 
+        user = getattr(g, "current_user", None)
+        completed_count = 0
+        if user is not None:
+            row = get_db().execute(
+                "SELECT COUNT(*) FROM user_progress WHERE user_id = ?",
+                (user["id"],),
+            ).fetchone()
+            completed_count = row[0] if row else 0
+
         return {
             "csrf_token": csrf_token,
-            "current_user": getattr(g, "current_user", None),
+            "current_user": user,
+            "header_completed_count": completed_count,
             "is_admin": (
-                getattr(g, "current_user", None) is not None
-                and g.current_user["role"] == "admin"
+                user is not None and user["role"] == "admin"
             ),
         }
 

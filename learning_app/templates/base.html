@@ -11,7 +11,12 @@
   </head>
   <body>
     <header class="site-header">
+      {% if current_user %}
+      <a class="brand" href="{{ url_for('main.dashboard') }}">Joshtech</a>
+      <span class="brand-badge" title="Lessons completed">{{ header_completed_count or 0 }} ✓</span>
+      {% else %}
       <a class="brand" href="{{ url_for('main.index') }}">Joshtech</a>
+      {% endif %}
       <nav aria-label="Main navigation">
         {% if is_admin %}
           <a href="{{ url_for('main.admin_dashboard') }}">Manage content</a>
@@ -52,6 +57,7 @@
     </main>
     <footer class="site-footer">A growing path for learning Python, one lesson at a time.</footer>
     <script defer src="{{ url_for('static', filename='password-toggle.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='confetti.js') }}"></script>
     {% block scripts %}{% endblock %}
   </body>
 </html>

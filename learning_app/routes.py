@@ -902,7 +902,7 @@ def mark_complete(lesson_id):
     )
     db.commit()
     flash("Lesson marked as complete.", "success")
-    return redirect(url_for("main.lesson_detail", lesson_id=lesson_id))
+    return redirect(url_for("main.lesson_detail", lesson_id=lesson_id, completed=1))
 
 
 @bp.post("/admin/logout")
