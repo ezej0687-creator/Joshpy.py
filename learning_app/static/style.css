@@ -856,3 +856,34 @@ select:focus {
     max-width: 95%;
   }
 }
+
+/* ===== Password show/hide toggle ===== */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field input {
+  padding-right: 2.75rem;
+}
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 0.35rem;
+}
+.password-toggle:hover { color: var(--blue); background: #eef2ff; }
+.password-toggle:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+.password-toggle svg { width: 1.15rem; height: 1.15rem; display: block; }
