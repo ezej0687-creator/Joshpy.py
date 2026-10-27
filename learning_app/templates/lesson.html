@@ -18,6 +18,31 @@
       </p>
     {% endif %}
 
+
+    {% if lesson %}
+      <section class="challenges-section" data-challenges="{{ lesson.id }}" data-csrf="{{ csrf_token() }}" aria-labelledby="challenges-heading">
+        <h2 id="challenges-heading">Auto-graded exercises</h2>
+        <p class="practice-intro">
+          Read the lesson above first. Then try each exercise. Fix the code, run the tests,
+          and the next exercise unlocks when all tests pass.
+        </p>
+        <div class="challenges-layout">
+          <aside class="ex-list" data-exercise-list aria-label="Exercises"></aside>
+          <div class="ex-pane">
+            <h3 data-ex-title>Loading…</h3>
+            <p class="ex-prompt" data-ex-prompt></p>
+            <div class="ex-toolbar">
+              <button class="button" type="button" data-run-tests>Run tests</button>
+              <button class="button button-secondary button-small" type="button" data-ex-hint hidden>Show hint</button>
+              <span class="ex-status" data-ex-status></span>
+            </div>
+            <p class="ex-hint-text" data-ex-hint-text hidden></p>
+            <div class="ex-results" data-ex-results aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
     {% if exercises %}
       <section class="practice-section" aria-labelledby="practice-heading">
         <h2 id="practice-heading">Practice exercises</h2>
@@ -141,4 +166,5 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/python/python.min.js"></script>
   <script defer src="{{ url_for('static', filename='practice.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='challenges.js') }}"></script>
 {% endblock %}
