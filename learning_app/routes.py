@@ -637,6 +637,24 @@ def get_lesson_exercises(lesson_id):
     }
 
 
+@bp.get("/api/exercises/<int:lesson_id>")
+@login_required
+def api_get_exercises(lesson_id):
+    """Return all exercises for a lesson + the user's passed exercise IDs."""
+    from .challenges import get_exercises_for_lesson, exercise_unlock_state
+    db = get_db()
+    lesson = db.execute("SELECT id FROM lessons WHERE id = ?", (lesson_id,)).fetchone()
+    if lesson is None:
+        return {"error": "Lesson not found"}, 404
+
+    exercises = get_exercises_for_lesson(lesson_id)
+    state = exercise_unlock_state(lesson_id)
+    for ex in exercises:
+        ex["unlocked"] = state.get(ex["id"], False)
+
+    return {"exercises": exercises}
+
+
 @bp.post("/api/exercises/<int:exercise_id>/complete")
 @login_required
 def mark_exercise_complete(exercise_id):
