@@ -25,6 +25,7 @@
         {% elif current_user %}
           <a href="{{ url_for('main.dashboard') }}">My dashboard</a>
           <a href="{{ url_for('main.tutor') }}">AI tutor</a>
+          <a href="{{ url_for('main.python_runner') }}">Python runner</a>
           <a href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
           <a href="{{ url_for('main.change_password') }}">Password</a>
           <form class="inline-form" method="post" action="{{ url_for('main.logout') }}">
