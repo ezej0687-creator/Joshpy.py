@@ -9,7 +9,7 @@
   <div class="table-scroll">
     <table class="data-table">
       <thead>
-        <tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Lessons complete</th><th scope="col">Rank</th><th scope="col">Joined</th></tr>
+        <tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Lessons complete</th><th scope="col">Rank</th><th scope="col">Joined</th><th scope="col">Action</th></tr>
       </thead>
       <tbody>
         {% for user in users %}
@@ -20,9 +20,22 @@
             <td>{{ user.completed_count }}</td>
             <td>{% if user.role == "learner" %}#{{ user.rank }}{% else %}—{% endif %}</td>
             <td>{{ user.created_at }}</td>
+            <td>
+              {% if user.id == current_user.id %}
+                <span class="muted">— you</span>
+              {% else %}
+                <form method="post"
+                      action="{{ url_for('main.admin_delete_user', user_id=user.id) }}"
+                      style="display:inline;"
+                      onsubmit="return confirm('Delete {{ user.display_name|e }} ({{ user.email|e }})? This cannot be undone.');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="text-button" title="Delete account" aria-label="Delete {{ user.display_name|e }}">Delete</button>
+                </form>
+              {% endif %}
+            </td>
           </tr>
         {% else %}
-          <tr><td colspan="6">No accounts have registered yet.</td></tr>
+          <tr><td colspan="7">No accounts have registered yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

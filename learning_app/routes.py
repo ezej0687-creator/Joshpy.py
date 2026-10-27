@@ -629,6 +629,30 @@ def tutor_reply():
     return {"reply": reply}
 
 
+@bp.post("/account/delete")
+@login_required
+def delete_own_account():
+    password = request.form.get("password", "")
+    user = g.current_user
+
+    stored_hash = get_db().execute(
+        "SELECT password_hash FROM users WHERE id = ?", (user["id"],)
+    ).fetchone()["password_hash"]
+
+    if not check_password_hash(stored_hash, password):
+        flash("Password is incorrect. Account was not deleted.", "error")
+        return redirect(url_for("main.change_password"))
+
+    db = get_db()
+    db.execute("DELETE FROM users WHERE id = ?", (user["id"],))
+    db.commit()
+    session.clear()
+    session["learner_id"] = secrets.token_urlsafe(24)
+    logger.info("User %s deleted their own account", user["id"])
+    flash("Your account has been deleted.", "success")
+    return redirect(url_for("main.index"))
+
+
 @bp.route("/account/password", methods=("GET", "POST"))
 @login_required
 def change_password():
@@ -869,6 +893,30 @@ def admin_dashboard():
             "SELECT COUNT(*) FROM users WHERE role = 'learner'"
         ).fetchone()[0],
     )
+
+
+@bp.post("/admin/users/<int:user_id>/delete")
+@admin_required
+def admin_delete_user(user_id):
+    db = get_db()
+    target = db.execute(
+        "SELECT id, display_name, email, role FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+
+    if target is None:
+        abort(404)
+    if target["id"] == g.current_user["id"]:
+        flash("You cannot delete your own account from the admin panel.", "error")
+        return redirect(url_for("main.admin_users"))
+
+    db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    db.commit()
+    logger.info(
+        "Admin %s deleted user %s (%s, role=%s)",
+        g.current_user["id"], target["id"], target["email"], target["role"],
+    )
+    flash(f"Deleted account: {target['display_name']} ({target['email']}).", "success")
+    return redirect(url_for("main.admin_users"))
 
 
 @bp.get("/admin/users")
