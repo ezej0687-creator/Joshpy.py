@@ -192,7 +192,6 @@ def issue_password_reset(user):
         return False
     token = secrets.token_urlsafe(32)
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
-    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     db.execute(
         """
         INSERT INTO password_reset_tokens (token_hash, user_id, created_at, expires_at)
