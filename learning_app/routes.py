@@ -295,25 +295,45 @@ def build_tutor_system_message(lesson):
     )
 
 
+def tutor_is_configured():
+    """Return True if the active AI provider has credentials."""
+    provider = current_app.config.get("AI_PROVIDER", "openai").lower()
+    if provider == "groq":
+        return bool(current_app.config.get("GROQ_API_KEY"))
+    return bool(current_app.config.get("OPENAI_API_KEY"))
+
+
 def request_tutor_reply(messages):
-    api_key = current_app.config.get("OPENAI_API_KEY")
+    provider = current_app.config.get("AI_PROVIDER", "openai").lower()
+
+    if provider == "groq":
+        api_key = current_app.config.get("GROQ_API_KEY")
+        base_url = "https://api.groq.com/openai/v1/chat/completions"
+        model = current_app.config.get("GROQ_MODEL", "openai/gpt-oss-120b")
+    else:
+        api_key = current_app.config.get("OPENAI_API_KEY")
+        base_url = "https://api.openai.com/v1/chat/completions"
+        model = current_app.config.get("OPENAI_MODEL", "gpt-4o-mini")
+
     if not api_key:
-        raise RuntimeError("The OpenAI tutor is not configured.")
+        raise RuntimeError(f"The {provider} tutor is not configured.")
 
     body = json.dumps(
         {
-            "model": current_app.config["OPENAI_MODEL"],
+            "model": model,
             "messages": messages,
             "max_tokens": TUTOR_MAX_REPLY_TOKENS,
             "temperature": 0.5,
         }
     ).encode("utf-8")
+
     api_request = Request(
-        "https://api.openai.com/v1/chat/completions",
+        base_url,
         data=body,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
+            "User-Agent": "Python-Learning-Tutor/1.0",
         },
         method="POST",
     )
@@ -321,9 +341,8 @@ def request_tutor_reply(messages):
         result = json.loads(response.read())
     reply = result["choices"][0]["message"]["content"]
     if not isinstance(reply, str) or not reply.strip():
-        raise ValueError("The OpenAI tutor returned an empty reply.")
+        raise ValueError("The AI tutor returned an empty reply.")
     return reply.strip()
-
 
 def reserve_tutor_request(user_id):
     db = get_db()
@@ -517,7 +536,7 @@ def tutor():
         "tutor.html",
         lessons=lessons,
         selected_lesson=selected_lesson,
-        tutor_available=bool(current_app.config.get("OPENAI_API_KEY")),
+        tutor_available=tutor_is_configured(),
     )
 
 
@@ -572,9 +591,9 @@ def tutor_reply():
         if lesson is None:
             abort(404)
 
-    if not current_app.config.get("OPENAI_API_KEY"):
+    if not tutor_is_configured():
         return {
-            "error": "The AI tutor is not configured yet. Ask the site administrator to add an OpenAI API key."
+            "error": "The AI tutor is not configured yet. Ask the site administrator to set up an AI provider."
         }, 503
     if not reserve_tutor_request(g.current_user["id"]):
         return {
