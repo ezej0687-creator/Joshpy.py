@@ -189,7 +189,7 @@
     if (!ex || pendingRequest) return;
     const code = getCurrentCode();
     if (!code.trim()) {
-      resultsEl.innerHTML = '<p class="ex-summary">Write some code before running tests.</p>';
+      resultsEl.innerHTML = '<p class="ex-summary">Write some code before running tests.</p>'; 
       return;
     }
     pendingRequest = `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
