@@ -18,3 +18,7 @@ instance/
 .DS_Store
 # Copilot agent scratch
 .git/refs/agents/
+
+# Backups
+*.bak
+*.backup
