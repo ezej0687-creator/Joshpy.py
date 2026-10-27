@@ -1,5 +1,24 @@
-.venv/
+# Python
 __pycache__/
 *.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual env
+.venv/
+venv/
+ENV/
+
+# Flask instance (DB, secrets)
 instance/
+*.db
+*.sqlite3
+
+# Env / secrets
 .env
+
+# OS
+.DS_Store
+
+# Copilot agent scratch
+.git/refs/agents/
