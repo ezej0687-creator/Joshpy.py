@@ -1315,3 +1315,39 @@ textarea {
   color: #d4dae6;
   font: 0.85rem/1.6 var(--font-mono);
 }
+
+/* ===== Next lesson card (dashboard) ===== */
+.next-lesson-card {
+  position: relative;
+  margin-bottom: var(--s-6);
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(600px 300px at 100% 0%, var(--accent-soft), transparent 60%),
+    linear-gradient(180deg, #ffffff, var(--bg));
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.next-lesson-card-complete {
+  background:
+    radial-gradient(600px 300px at 100% 0%, var(--success-soft), transparent 60%),
+    linear-gradient(180deg, #ffffff, var(--bg));
+}
+
+.next-lesson-label {
+  margin-bottom: var(--s-2);
+}
+
+.next-lesson-title {
+  margin: 0 0 var(--s-2);
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.next-lesson-context {
+  margin: 0 0 var(--s-4);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}

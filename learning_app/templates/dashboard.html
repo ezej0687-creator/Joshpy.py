@@ -1,6 +1,26 @@
 {% extends "base.html" %}
 {% block title %}My dashboard · Joshtech{% endblock %}
 {% block content %}
+  {% if next_lesson %}
+    <section class="next-lesson-card" aria-labelledby="next-lesson-heading">
+      <div class="next-lesson-label">
+        <span class="eyebrow" style="margin:0;">Up next</span>
+      </div>
+      <h2 id="next-lesson-heading" class="next-lesson-title">{{ next_lesson.title }}</h2>
+      <p class="next-lesson-context">{{ next_lesson.module_title }}</p>
+      <a class="button" href="{{ url_for('main.lesson_detail', lesson_id=next_lesson.id) }}">Continue learning →</a>
+    </section>
+  {% elif all_complete and total_lessons > 0 %}
+    <section class="next-lesson-card next-lesson-card-complete" aria-labelledby="all-done-heading">
+      <div class="next-lesson-label">
+        <span class="eyebrow" style="margin:0;">🎉 All done</span>
+      </div>
+      <h2 id="all-done-heading" class="next-lesson-title">You've completed every lesson</h2>
+      <p class="next-lesson-context">Nice work. Revisit any module below to reinforce what you learned.</p>
+    </section>
+  {% endif %}
+
+
   <section class="hero">
     <p class="eyebrow">Your personal dashboard</p>
     <h1>Welcome, {{ current_user.display_name }}</h1>

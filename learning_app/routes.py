@@ -103,6 +103,27 @@ def establish_login(user):
     session.permanent = True
 
 
+def find_next_lesson(user_id):
+    """Return the next incomplete lesson for a user, or None if all done."""
+    row = get_db().execute(
+        """
+        SELECT
+            l.id, l.title, l.slug,
+            m.title AS module_title, m.slug AS module_slug,
+            m.sort_order AS module_order, l.sort_order AS lesson_order
+        FROM lessons AS l
+        JOIN modules AS m ON m.id = l.module_id
+        WHERE l.id NOT IN (
+            SELECT lesson_id FROM user_progress WHERE user_id = ?
+        )
+        ORDER BY m.sort_order, m.id, l.sort_order, l.id
+        LIMIT 1
+        """,
+        (user_id,),
+    ).fetchone()
+    return row
+
+
 def build_leaderboard():
     return get_db().execute(
         """
@@ -489,6 +510,8 @@ def dashboard():
         total_lessons=total_lessons,
         completed_count=completed_count,
         user_rank=user_rank,
+        next_lesson=find_next_lesson(g.current_user["id"]),
+        all_complete=(total_lessons > 0 and completed_count >= total_lessons),
     )
 
 
