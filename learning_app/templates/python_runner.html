@@ -68,6 +68,71 @@
         }
       }
 
+// ============================================================
+      // Test runner — extends the existing "run" protocol
+      // Handles message.type === "test":
+      //   - runs user code
+      //   - then evaluates each test case against the result
+      //   - sends back per-test pass/fail
+      // ============================================================
+      async function runTests(requestId, code, tests) {
+        try {
+          const runtime = await loadRuntime(requestId);
+          runtime.setStdout({ batched: () => {} });
+          runtime.setStderr({ batched: () => {} });
+          runtime.setStdin({ stdin: () => null, isatty: false });
+
+          // Load user code once
+          try {
+            await runtime.runPythonAsync(code);
+          } catch (error) {
+            send({
+              type: "test-result",
+              requestId,
+              results: tests.map((t) => ({
+                name: t.call,
+                passed: false,
+                error: "Your code raised: " + (error instanceof Error ? error.message : String(error)),
+              })),
+            });
+            return;
+          }
+
+          // Run each test case
+          const results = [];
+          for (const test of tests) {
+            try {
+              const expression = `${test.call}`;
+              const result = await runtime.runPythonAsync(expression);
+              const actual = String(result);
+              const expected = String(test.expected);
+              results.push({
+                name: test.call,
+                passed: actual === expected,
+                expected,
+                actual,
+              });
+            } catch (error) {
+              results.push({
+                name: test.call,
+                passed: false,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+
+          send({ type: "test-result", requestId, results });
+        } catch (error) {
+          send({
+            type: "test-result",
+            requestId,
+            results: [],
+            fatalError: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
+
       window.addEventListener("message", (event) => {
         if (event.source !== window.parent) {
           return;
@@ -77,6 +142,19 @@
           send({ type: "ready" });
           return;
         }
+        if (
+          message &&
+          message.type === "test" &&
+          typeof message.requestId === "string" &&
+          typeof message.code === "string" &&
+          Array.isArray(message.tests)
+        ) {
+          runQueue = runQueue.then(() =>
+            runTests(message.requestId, message.code, message.tests)
+          );
+          return;
+        }
+
         if (
           !message ||
           message.type !== "run" ||

@@ -584,6 +584,86 @@ def tutor():
     )
 
 
+# ============================================================
+# Exercise endpoints
+# ============================================================
+
+@bp.get("/api/lessons/<int:lesson_id>/exercises")
+@login_required
+def get_lesson_exercises(lesson_id):
+    """Return all exercises for a lesson + the user's passed exercise IDs."""
+    db = get_db()
+    lesson = db.execute("SELECT id FROM lessons WHERE id = ?", (lesson_id,)).fetchone()
+    if lesson is None:
+        return {"error": "Lesson not found"}, 404
+
+    rows = db.execute(
+        """
+        SELECT id, slug, title, prompt, starter_code, tests_json, hint, sort_order
+        FROM lesson_exercises
+        WHERE lesson_id = ?
+        ORDER BY sort_order, id
+        """,
+        (lesson_id,),
+    ).fetchall()
+
+    exercises = []
+    for row in rows:
+        exercises.append({
+            "id": row["id"],
+            "slug": row["slug"],
+            "title": row["title"],
+            "prompt": row["prompt"],
+            "starter_code": row["starter_code"],
+            "tests": json.loads(row["tests_json"]) if row["tests_json"] else [],
+            "hint": row["hint"] or "",
+            "sort_order": row["sort_order"],
+        })
+
+    passed_rows = db.execute(
+        """
+        SELECT exercise_id FROM user_exercise_results
+        WHERE user_id = ? AND exercise_id IN (
+            SELECT id FROM lesson_exercises WHERE lesson_id = ?
+        )
+        """,
+        (g.current_user["id"], lesson_id),
+    ).fetchall()
+    passed_ids = [r["exercise_id"] for r in passed_rows]
+
+    return {
+        "exercises": exercises,
+        "passed_ids": passed_ids,
+    }
+
+
+@bp.post("/api/exercises/<int:exercise_id>/complete")
+@login_required
+def mark_exercise_complete(exercise_id):
+    """Record that the user passed all tests for an exercise."""
+    db = get_db()
+    exercise = db.execute(
+        "SELECT id, lesson_id FROM lesson_exercises WHERE id = ?",
+        (exercise_id,),
+    ).fetchone()
+    if exercise is None:
+        return {"error": "Exercise not found"}, 404
+
+    db.execute(
+        """
+        INSERT OR IGNORE INTO user_exercise_results (user_id, exercise_id)
+        VALUES (?, ?)
+        """,
+        (g.current_user["id"], exercise_id),
+    )
+    db.commit()
+    logger.info(
+        "User %s passed exercise %s (lesson %s)",
+        g.current_user["id"], exercise_id, exercise["lesson_id"],
+    )
+    return {"ok": True, "exercise_id": exercise_id}
+
+
 @bp.post("/api/tutor")
 @login_required
 def tutor_reply():
