@@ -13,7 +13,6 @@
     <header class="site-header">
       <a class="brand" href="{{ url_for('main.index') }}">Python Learning</a>
       <nav aria-label="Main navigation">
-        <a href="{{ url_for('main.index') }}">Learning path</a>
         {% if is_admin %}
           <a href="{{ url_for('main.admin_dashboard') }}">Manage content</a>
           <a href="{{ url_for('main.admin_users') }}">Learners</a>
