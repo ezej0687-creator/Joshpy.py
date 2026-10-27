@@ -277,5 +277,30 @@
         ]
       }
     ]
+  },
+  {
+    "slug": "debugging",
+    "title": "Debugging like an engineer",
+    "description": "Learn to read tracebacks, spot common bugs, and use the debugger to find the root cause.",
+    "lessons": [
+      {
+        "slug": "read-the-traceback",
+        "title": "Read the traceback",
+        "content": "When Python hits a problem it can't handle, it stops and prints a traceback. This report shows what kind of error happened, where in your code it happened, and the chain of function calls that got you there.\n\nHere is a traceback:\n\nTraceback (most recent call last):\n  File \"app.py\", line 7, in <module>\n    result = divide(10, 0)\n  File \"app.py\", line 3, in divide\n    return a / b\nZeroDivisionError: division by zero\n\nBeginners read tracebacks top-down and get lost in the noise. Engineers read them bottom-up — the last line tells you the actual problem, and the line above it tells you where.\n\nThe bottom line is the Exception Type and message. The line above that is the exact file and code snippet that crashed. Look at those two first, before you look at anything else.",
+        "exercises": []
+      },
+      {
+        "slug": "common-bugs",
+        "title": "Common bugs",
+        "content": "A lot of bugs you will write are not unique to you. They are classic traps that almost every Python programmer falls into at least once.\n\n1. Mutable Default Arguments\nIf you define a function with a default list (def add(item, my_list=[])), that list is created exactly once, the first time the function is called. Every future call shares the same list. This causes data to leak between calls.\n\n2. The Truthiness Trap\nIn Python, 0, False, empty strings (\"\"), and empty lists ([]) all evaluate to False. If you write if not x:, it will trigger for x=0 and x=False. Sometimes that is what you want, but often it is a bug. Be explicit: if x is False: or if x == 0:.\n\n3. Off-by-one errors\nSometimes loops run one time too many, or indexes are off by one. Always test your code with empty input, a single item, and a large number of items.",
+        "exercises": []
+      },
+      {
+        "slug": "the-debugger",
+        "title": "The debugger",
+        "content": "Print statements are fine, but the debugger is a superpower. It lets you pause your code mid-execution, look at every variable, and step through it line by line.\n\nIn Python, you start the debugger by putting breakpoint() anywhere in your code.\n\nWhen the code reaches that line, it will pause. Your terminal will become an interactive prompt. You can type:\n- n (next) to run the next line\n- s (step) to step into a function call\n- c (continue) to let the code run until the next breakpoint\n- p variable_name (print) to see the value of a variable\n- q (quit) to stop\n\nUsing the debugger helps you understand exactly what the code is doing, rather than guessing.",
+        "exercises": []
+      }
+    ]
   }
 ]

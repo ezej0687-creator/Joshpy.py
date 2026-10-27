@@ -1,0 +1,89 @@
+{
+  "module_slug": "debugging",
+  "exercises": [
+    {
+      "lesson_slug": "read-the-traceback",
+      "slug": "ex09-1-sum-evens",
+      "title": "Fix: sum_evens",
+      "prompt": "This function should return the sum of all even numbers. It returns the wrong answer. Find the bug and fix it.",
+      "starter_code": "def sum_evens(nums):\n    total = 0\n    for n in nums:\n        if n % 2 == 0:\n            total = n\n    return total\n",
+      "tests": [
+        {"call": "sum_evens([1, 2, 3, 4])", "expected": 6},
+        {"call": "sum_evens([2, 2, 2])", "expected": 6},
+        {"call": "sum_evens([])", "expected": 0}
+      ],
+      "hint": "Look at how total is assigned inside the loop. Should it overwrite or add?",
+      "sort_order": 1
+    },
+    {
+      "lesson_slug": "read-the-traceback",
+      "slug": "ex09-2-get-item",
+      "title": "Fix: get_item",
+      "prompt": "This function should return the item at the given index. It crashes with an IndexError. Fix it so it returns None if the index is out of range.",
+      "starter_code": "def get_item(items, index):\n    return items[index]\n",
+      "tests": [
+        {"call": "get_item([1, 2, 3], 1)", "expected": 2},
+        {"call": "get_item([1, 2, 3], 5)", "expected": "None"},
+        {"call": "get_item([], 0)", "expected": "None"}
+      ],
+      "hint": "Wrap the code in a try/except block, or check the length of the list first.",
+      "sort_order": 2
+    },
+    {
+      "lesson_slug": "common-bugs",
+      "slug": "ex09-3-mutable-default",
+      "title": "Fix: mutable default",
+      "prompt": "This function should add an item to a list. Calling it twice should not share the same list. Fix the bug.",
+      "starter_code": "def add_item(item, my_list=[]):\n    my_list.append(item)\n    return my_list\n",
+      "tests": [
+        {"call": "add_item(1, [])", "expected": "[1]"},
+        {"call": "add_item(2)", "expected": "[2]"},
+        {"call": "add_item(3)", "expected": "[3]"}
+      ],
+      "hint": "Never use [] as a default argument. Use None instead, and create the list inside the function.",
+      "sort_order": 3
+    },
+    {
+      "lesson_slug": "common-bugs",
+      "slug": "ex09-4-truthiness",
+      "title": "Fix: truthiness trap",
+      "prompt": "This function should return 'Zero' if the number is 0, otherwise 'Not zero'. It currently returns 'Zero' for False, but crashes or gives wrong results for 0. Fix the logic.",
+      "starter_code": "def check_zero(num):\n    if not num:\n        return \"Zero\"\n    return \"Not zero\"\n",
+      "tests": [
+        {"call": "check_zero(0)", "expected": "Zero"},
+        {"call": "check_zero(1)", "expected": "Not zero"},
+        {"call": "check_zero(-1)", "expected": "Not zero"}
+      ],
+      "hint": "Use `num == 0` explicitly instead of `not num`. Truthiness treats 0, False, and empty strings the same.",
+      "sort_order": 4
+    },
+    {
+      "lesson_slug": "the-debugger",
+      "slug": "ex09-5-debug-loop",
+      "title": "Fix: infinite loop",
+      "prompt": "This function should count down from a number to 1. It currently runs forever. Fix the bug.",
+      "starter_code": "def countdown(n):\n    result = []\n    while n > 0:\n        result.append(n)\n    return result\n",
+      "tests": [
+        {"call": "countdown(3)", "expected": "[3, 2, 1]"},
+        {"call": "countdown(1)", "expected": "[1]"},
+        {"call": "countdown(0)", "expected": "[]"}
+      ],
+      "hint": "Look at the loop body. Is `n` ever changing?",
+      "sort_order": 5
+    },
+    {
+      "lesson_slug": "the-debugger",
+      "slug": "ex09-6-logic",
+      "title": "Fix: logic bug",
+      "prompt": "This function should return the largest number in the list. It returns the last number instead. Fix it.",
+      "starter_code": "def find_max(nums):\n    best = 0\n    for n in nums:\n        if n > best:\n            pass\n    return best\n",
+      "tests": [
+        {"call": "find_max([1, 5, 2])", "expected": 5},
+        {"call": "find_max([10, 2, 1])", "expected": 10},
+        {"call": "find_max([-1, -5])", "expected": -1}
+      ],
+      "hint": "You are checking if n > best, but you forgot to actually update `best`.",
+      "sort_order": 6
+    }
+  ]
+}
