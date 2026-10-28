@@ -1263,10 +1263,3 @@ def edit_lesson(lesson_id):
         lesson_exercises="\n".join(parse_exercises(lesson["exercise"])),
     )
 
-
-@bp.get("/admin/seed-db-now")
-def seed_db_now():
-    from .database import init_db
-    init_db()
-    return "✅ DB Seeded successfully! You can now close this tab."
-
