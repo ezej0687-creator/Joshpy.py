@@ -114,7 +114,7 @@ def create_app(test_config=None):
     @app.after_request
     def add_no_cache_headers(response):
         # Prevent the browser from caching any page viewed by a logged-in user
-        if session.get("user_id") is not None:
+        if getattr(g, "current_user", None) is not None:
             response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"

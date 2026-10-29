@@ -64,6 +64,11 @@ class LearningAppTests(unittest.TestCase):
 
     def test_learning_path_and_lesson_progress(self):
         response = self.client.get("/")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/login")
+        self.register()
+
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertLess(
             response.data.index(b"Command Line: Your Powerful Toolbox"),
@@ -71,17 +76,17 @@ class LearningAppTests(unittest.TestCase):
         )
         self.assertIn(b"Python fundamentals", response.data)
 
+        self.client.get("/dashboard")
         lesson_response = self.client.get("/lessons/1")
         self.assertEqual(lesson_response.status_code, 200)
-        self.assertEqual(lesson_response.data.count(b"data-practice-editor"), 3)
-        self.assertIn(b"Run Python", lesson_response.data)
+        self.assertEqual(lesson_response.data.count(b"data-practice-editor"), 1)
+        self.assertIn(b">Run<", lesson_response.data)
         self.assertIn(b'sandbox="allow-scripts"', lesson_response.data)
         self.assertEqual(self.client.post(
             "/lessons/1/complete",
             data={"csrf_token": self.csrf_token()},
         ).status_code, 302)
 
-        self.register()
         self.client.get("/dashboard")
         response = self.client.post(
             "/lessons/1/complete",
@@ -90,8 +95,45 @@ class LearningAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
 
         dashboard = self.client.get("/dashboard")
-        self.assertIn(b"1 of 11", dashboard.data)
+        self.assertIn(b"1 of 30", dashboard.data)
         self.assertIn(b"Test Learner", dashboard.data)
+
+    def test_learning_pages_require_sign_in_and_logout_returns_to_authentication(self):
+        for path in ("/", "/modules/fundamentals", "/lessons/1", "/python-runner"):
+            response = self.client.get(path)
+            self.assertEqual(response.status_code, 302, path)
+            self.assertEqual(response.headers["Location"], "/login", path)
+
+        self.assertEqual(self.client.get("/login").status_code, 200)
+        self.assertIn(b"create a new account", self.client.get("/login").data)
+        self.register()
+        self.client.get("/dashboard")
+
+        logout_response = self.client.post(
+            "/logout",
+            data={"csrf_token": self.csrf_token()},
+        )
+        self.assertEqual(logout_response.status_code, 302)
+        self.assertEqual(logout_response.headers["Location"], "/login")
+        self.assertIn("no-store", logout_response.headers["Cache-Control"])
+
+        login_page = self.client.get("/")
+        self.assertEqual(login_page.status_code, 302)
+        self.assertEqual(login_page.headers["Location"], "/login")
+        login_page = self.client.get("/login")
+        self.assertEqual(login_page.status_code, 200)
+        self.assertIn(b"create a new account", login_page.data)
+        self.assertIn(b"Sign up", login_page.data)
+
+        admin_client = self.app.test_client()
+        self.assertEqual(self.sign_in_admin(admin_client).status_code, 302)
+        admin_client.get("/admin")
+        admin_logout = admin_client.post(
+            "/admin/logout",
+            data={"csrf_token": self.csrf_token(admin_client)},
+        )
+        self.assertEqual(admin_logout.status_code, 302)
+        self.assertEqual(admin_logout.headers["Location"], "/login")
 
     def test_completion_requires_csrf_token(self):
         response = self.client.post("/lessons/1/complete")
@@ -318,6 +360,23 @@ class LearningAppTests(unittest.TestCase):
             }
         )
         client = app.test_client()
+        response = client.get("/")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/login")
+
+        client.get("/register")
+        with client.session_transaction() as session:
+            csrf_token = session["csrf_token"]
+        client.post(
+            "/register",
+            data={
+                "csrf_token": csrf_token,
+                "display_name": "Test Learner",
+                "email": "learner@example.test",
+                "password": "a-very-secure-password",
+                "password_confirmation": "a-very-secure-password",
+            },
+        )
         response = client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertLess(
