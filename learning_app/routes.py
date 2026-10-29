@@ -88,10 +88,11 @@ def migrate_legacy_progress(user_id):
     db = get_db()
     db.execute(
         """
-        INSERT OR IGNORE INTO user_progress (user_id, lesson_id, completed_at)
+        INSERT INTO user_progress (user_id, lesson_id, completed_at)
         SELECT ?, lesson_id, completed_at
         FROM progress
         WHERE learner_id = ?
+        ON CONFLICT DO NOTHING
         """,
         (user_id, legacy_learner_id),
     )
@@ -697,8 +698,9 @@ def mark_complete(lesson_id):
         abort(404)
     db.execute(
         """
-        INSERT OR IGNORE INTO user_progress (user_id, lesson_id)
+        INSERT INTO user_progress (user_id, lesson_id)
         VALUES (?, ?)
+        ON CONFLICT DO NOTHING
         """,
         (g.current_user["id"], lesson_id),
     )
