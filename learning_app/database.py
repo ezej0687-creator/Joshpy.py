@@ -83,6 +83,67 @@ def close_db(_error=None):
         db.close()
 
 
+def load_exercise_files(db):
+    """Walk lessons/*/exercises.json and upsert each module's exercises."""
+    lessons_dir = Path(__file__).resolve().parent.parent / "lessons"
+    if not lessons_dir.exists():
+        return
+
+    for exercises_file in lessons_dir.glob("*/exercises.json"):
+        module_slug = exercises_file.parent.name
+        try:
+            exercises_data = json.loads(exercises_file.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+
+        for ex in exercises_data.get("exercises", []):
+            lesson_slug = ex.get("lesson_slug")
+            ex_slug = ex.get("slug")
+            if not lesson_slug or not ex_slug:
+                continue
+
+            lesson_row = db.execute(
+                """
+                SELECT l.id FROM lessons AS l
+                JOIN modules AS m ON m.id = l.module_id
+                WHERE m.slug = ? AND l.slug = ?
+                """,
+                (module_slug, lesson_slug),
+            ).fetchone()
+            if not lesson_row:
+                continue
+
+            tests_json = json.dumps(ex.get("tests", []))
+            
+            # Postgres uses ON CONFLICT, SQLite uses INSERT OR REPLACE
+            query = """
+                INSERT INTO lesson_exercises
+                    (lesson_id, slug, title, prompt, starter_code, tests_json, hint, sort_order)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(lesson_id, slug) DO UPDATE SET
+                    title = excluded.title,
+                    prompt = excluded.prompt,
+                    starter_code = excluded.starter_code,
+                    tests_json = excluded.tests_json,
+                    hint = excluded.hint,
+                    sort_order = excluded.sort_order
+            """
+            db.execute(
+                query,
+                (
+                    lesson_row["id"],
+                    ex_slug,
+                    ex.get("title", ex_slug),
+                    ex.get("prompt", ""),
+                    ex.get("starter_code", ""),
+                    tests_json,
+                    ex.get("hint", ""),
+                    ex.get("sort_order", 0),
+                ),
+            )
+    db.commit()
+
+
 def init_db():
     db = get_db()
     
