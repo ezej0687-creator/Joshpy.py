@@ -15,9 +15,26 @@ class PostgresWrapper:
         self.conn = conn
 
     def execute(self, query, parameters=()):
+        # Convert SQLite ? to Postgres %s
         query = query.replace("?", "%s")
         cur = self.conn.cursor()
+        
+        # SQLite uses cursor.lastrowid. Postgres requires RETURNING id.
+        # If this is an INSERT without a RETURNING clause, add one so we can get the ID.
+        if query.strip().upper().startswith("INSERT") and "RETURNING" not in query.upper():
+            query += " RETURNING id"
+            
         cur.execute(query, parameters)
+        
+        # If we added RETURNING id, fetch it and mock it as lastrowid
+        if "RETURNING id" in query.upper():
+            try:
+                row = cur.fetchone()
+                if row:
+                    cur.lastrowid = row["id"]
+            except Exception:
+                pass
+                
         return cur
 
     def commit(self):
