@@ -1,44 +1,78 @@
 {% extends "base.html" %}
-{% block title %}Joshtech Path{% endblock %}
+{% block title %}Joshtech · Learn Python{% endblock %}
 {% block content %}
-  <section class="hero">
-    <p class="eyebrow">Learn by doing</p>
-    <h1>Your Python learning path</h1>
-    <p>Start with the foundations, practice each idea, and build your Python skills one module at a time.</p>
-    <div class="progress-summary">
-      {% if has_account %}
-        <strong>{{ completed_count }} of {{ total_lessons }}</strong>
-        <span>lessons completed on your account · <a href="{{ url_for('main.dashboard') }}">Open my dashboard</a></span>
-      {% else %}
-        <strong>{{ total_lessons }} lessons</strong>
-        <span><a href="{{ url_for('main.register') }}">Create an account</a> to save progress and join the leaderboard.</span>
-      {% endif %}
-    </div>
-    <div class="progress-track" aria-label="{{ completed_count }} of {{ total_lessons }} lessons complete">
-      <span style="width: {{ (completed_count / total_lessons * 100) if total_lessons else 0 }}%"></span>
-    </div>
-  </section>
 
-  <section aria-labelledby="modules-heading">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">The curriculum</p>
-        <h2 id="modules-heading">Modules</h2>
+  <!-- Hero Section (Apple Minimal) -->
+  <div class="relative overflow-hidden rounded-3xl bg-white shadow-soft border border-gray-100 mb-12 px-6 py-16 sm:px-12 sm:py-24 text-center">
+    <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+    <div class="absolute -top-40 -right-40 w-96 h-96 bg-brand-100 rounded-full blur-3xl opacity-50"></div>
+    <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-green-100 rounded-full blur-3xl opacity-50"></div>
+    
+    <div class="relative z-10 max-w-3xl mx-auto">
+      <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-50 text-brand-700 text-xs font-bold uppercase tracking-wider mb-6 border border-brand-100">
+        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+        Learn by doing
+      </span>
+      <h1 class="text-5xl sm:text-6xl font-extrabold tracking-tight text-gray-900 mb-6 leading-tight">
+        Master Python.<br>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-brand-400">Build the future.</span>
+      </h1>
+      <p class="text-lg text-gray-500 mb-10 max-w-xl mx-auto font-medium">
+        Start with the foundations, practice each idea, and build your Python skills one module at a time with our AI-powered curriculum.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="{{ url_for('main.register') if not current_user else url_for('main.dashboard') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl shadow-playful text-white bg-brand-600 hover:bg-brand-700 btn-playful transition-all">
+          {{ 'Start Learning Now' if not current_user else 'Continue Learning' }}
+        </a>
+        {% if not current_user %}
+          <a href="{{ url_for('main.login') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all">
+            I already have an account
+          </a>
+        {% endif %}
       </div>
     </div>
-    {% if modules %}
-      <div class="module-grid">
-        {% for module in modules %}
-          <a class="module-card" href="{{ url_for('main.module_detail', slug=module.slug) }}">
-            <span class="module-number">{{ "%02d"|format(loop.index) }}</span>
-            <h3>{{ module.title }}</h3>
-            <p>{{ module.description }}</p>
-            <span class="card-meta">{{ module.lesson_count }} {{ "lesson" if module.lesson_count == 1 else "lessons" }}</span>
-          </a>
-        {% endfor %}
+  </div>
+
+  <!-- Progress Bar (If logged in) -->
+  {% if has_account %}
+    <div class="mb-12 bg-white rounded-2xl p-6 shadow-soft border border-gray-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900">Your Progress</h3>
+        <p class="text-sm text-gray-500">{{ completed_count }} of {{ total_lessons }} lessons completed</p>
       </div>
+      <a href="{{ url_for('main.dashboard') }}" class="text-brand-600 font-bold text-sm hover:text-brand-700">View Dashboard &rarr;</a>
+    </div>
+  {% endif %}
+
+  <!-- Modules Grid -->
+  <div class="mb-8 flex items-end justify-between">
+    <div>
+      <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">The Curriculum</h2>
+      <p class="text-gray-500 mt-1">Pick up where you left off or start something new.</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for module in modules %}
+      <a href="{{ url_for('main.module_detail', slug=module.slug) }}" class="group bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col h-full">
+        <div class="flex justify-between items-start mb-4">
+          <span class="font-mono text-sm font-bold text-gray-300 group-hover:text-brand-300 transition-colors">{{ "%02d"|format(loop.index) }}</span>
+          <div class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-brand-50 transition-colors">
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </div>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-brand-600 transition-colors">{{ module.title }}</h3>
+        <p class="text-sm text-gray-500 line-clamp-3 mb-6 flex-1">{{ module.description }}</p>
+        <div class="pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+          <span class="font-semibold text-gray-500">{{ module.lesson_count }} Lessons</span>
+          <span class="font-bold text-brand-600 group-hover:underline">Start &rarr;</span>
+        </div>
+      </a>
     {% else %}
-      <p class="empty-state">No modules have been added yet.</p>
-    {% endif %}
-  </section>
+      <div class="col-span-full py-12 text-center bg-white rounded-2xl border border-dashed border-gray-300">
+        <p class="text-gray-500 font-medium">No modules available yet.</p>
+      </div>
+    {% endfor %}
+  </div>
+
 {% endblock %}
