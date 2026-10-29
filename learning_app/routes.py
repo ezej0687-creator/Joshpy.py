@@ -690,6 +690,7 @@ def python_runner():
     return render_template("python_runner.html")
 
 
+
 @bp.post("/lessons/<int:lesson_id>/complete")
 @login_required
 def mark_complete(lesson_id):
