@@ -86,18 +86,87 @@ def close_db(_error=None):
 def init_db():
     db = get_db()
     
-    # In Postgres, we have to check if tables exist before creating them
-    # because executescript is not fully supported.
-    try:
-        db.execute("SELECT 1 FROM modules LIMIT 1")
-    except Exception:
-        # Tables don't exist yet, create them
-        schema = Path(__file__).with_name("schema.sql")
-        if not schema.exists():
-            raise RuntimeError("schema.sql not found")
-        db.executescript(schema.read_text(encoding="utf-8"))
-        db.commit()
+    # 1. Create tables (safely, ignoring if they already exist)
+    db.executescript("""
+        CREATE TABLE IF NOT EXISTS modules (
+            id SERIAL PRIMARY KEY,
+            slug TEXT NOT NULL UNIQUE,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0
+        );
 
+        CREATE TABLE IF NOT EXISTS lessons (
+            id SERIAL PRIMARY KEY,
+            module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+            slug TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT NOT NULL DEFAULT '',
+            exercise TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(module_id, slug)
+        );
+
+        CREATE TABLE IF NOT EXISTS progress (
+            learner_id TEXT NOT NULL,
+            lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+            completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (learner_id, lesson_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'learner' CHECK (role IN ('learner', 'admin')),
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            session_version INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS user_progress (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+            completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, lesson_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token_hash TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS tutor_requests (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            created_at INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS lesson_exercises (
+            id SERIAL PRIMARY KEY,
+            lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+            slug TEXT NOT NULL,
+            title TEXT NOT NULL,
+            prompt TEXT NOT NULL DEFAULT '',
+            starter_code TEXT NOT NULL DEFAULT '',
+            tests_json TEXT NOT NULL DEFAULT '[]',
+            hint TEXT NOT NULL DEFAULT '',
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(lesson_id, slug)
+        );
+
+        CREATE TABLE IF NOT EXISTS user_exercise_results (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            exercise_id INTEGER NOT NULL REFERENCES lesson_exercises(id) ON DELETE CASCADE,
+            passed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (user_id, exercise_id)
+        );
+    """)
+    db.commit()
+
+    # 2. Seed modules and lessons
     seed_file = Path(__file__).with_name("seed_content.json")
     if not seed_file.exists():
         return
@@ -110,7 +179,6 @@ def init_db():
         return
 
     for module_order, module in enumerate(seed_modules, start=1):
-        # Use RETURNING id for Postgres
         query = """
             INSERT INTO modules (slug, title, description, sort_order)
             VALUES (?, ?, ?, ?)
