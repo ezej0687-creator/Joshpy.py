@@ -60,7 +60,10 @@ def login_required(view):
     def wrapped_view(**kwargs):
         if getattr(g, "current_user", None) is None:
             flash("Sign in to access your learning account.", "error")
-            return redirect(url_for("main.login"))
+            response = redirect(url_for("main.login"))
+            # Force the browser to NOT cache this redirect
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            return response
         return view(**kwargs)
 
     return wrapped_view
