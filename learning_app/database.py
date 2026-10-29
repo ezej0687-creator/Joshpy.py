@@ -1,5 +1,8 @@
 import json
 import sqlite3
+import psycopg2
+import psycopg2.extras
+import os
 from pathlib import Path
 
 from flask import current_app, g
@@ -25,7 +28,7 @@ def init_db():
     db.executescript(
         """
         CREATE TABLE IF NOT EXISTS modules (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             slug TEXT NOT NULL UNIQUE,
             title TEXT NOT NULL,
             description TEXT NOT NULL DEFAULT '',
@@ -33,7 +36,7 @@ def init_db():
         );
 
         CREATE TABLE IF NOT EXISTS lessons (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             module_id INTEGER NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
             slug TEXT NOT NULL,
             title TEXT NOT NULL,
@@ -46,25 +49,25 @@ def init_db():
         CREATE TABLE IF NOT EXISTS progress (
             learner_id TEXT NOT NULL,
             lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-            completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (learner_id, lesson_id)
         );
 
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             display_name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE COLLATE NOCASE,
             password_hash TEXT NOT NULL,
             role TEXT NOT NULL DEFAULT 'learner'
                 CHECK (role IN ('learner', 'admin')),
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             session_version INTEGER NOT NULL DEFAULT 0
         );
 
         CREATE TABLE IF NOT EXISTS user_progress (
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-            completed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, lesson_id)
         );
 
@@ -76,7 +79,7 @@ def init_db():
         );
 
         CREATE TABLE IF NOT EXISTS tutor_requests (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             created_at INTEGER NOT NULL
         );
@@ -89,7 +92,7 @@ def init_db():
             ON tutor_requests(user_id, created_at);
 
         CREATE TABLE IF NOT EXISTS lesson_exercises (
-            id INTEGER PRIMARY KEY,
+            id SERIAL PRIMARY KEY,
             lesson_id INTEGER NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
             slug TEXT NOT NULL,
             title TEXT NOT NULL,
@@ -107,7 +110,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS user_exercise_results (
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             exercise_id INTEGER NOT NULL REFERENCES lesson_exercises(id) ON DELETE CASCADE,
-            passed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            passed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id, exercise_id)
         );
         """
