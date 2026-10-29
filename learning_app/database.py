@@ -9,11 +9,39 @@ from flask import current_app, g
 from werkzeug.security import generate_password_hash
 
 
+class PostgresWrapper:
+    """Wraps psycopg2 to accept ? placeholders like SQLite."""
+    def __init__(self, conn):
+        self.conn = conn
+
+    def execute(self, query, parameters=()):
+        query = query.replace("?", "%s")
+        cur = self.conn.cursor()
+        cur.execute(query, parameters)
+        return cur
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
+
 def get_db():
     if "db" not in g:
-        g.db = sqlite3.connect(current_app.config["DATABASE"])
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON")
+        db_url = os.environ.get("DATABASE_URL")
+        if db_url:
+            # --- POSTGRESQL (PRODUCTION) ---
+            conn = psycopg2.connect(db_url)
+            conn.cursor_factory = psycopg2.extras.DictCursor
+            g.db = PostgresWrapper(conn)
+        else:
+            # --- SQLITE (LOCAL DEV) ---
+            g.db = sqlite3.connect(current_app.config["DATABASE"])
+            g.db.row_factory = sqlite3.Row
+            g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
 
 
