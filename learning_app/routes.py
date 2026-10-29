@@ -970,9 +970,4 @@ def edit_lesson(lesson_id):
     )
 
 
-@bp.get("/admin/seed-db-now")
-def seed_db_now():
-    from .database import init_db
-    init_db()
-    return "✅ Postgres DB Seeded successfully! You can now close this tab."
 
