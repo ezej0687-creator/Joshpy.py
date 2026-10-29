@@ -5,7 +5,6 @@
   const messagesElement = chat?.querySelector("[data-chat-messages]");
   const status = chat?.querySelector("[data-chat-status]");
   const sendButton = chat?.querySelector("[data-send-chat]");
-  const clearButton = chat?.querySelector("[data-clear-chat]");
   if (!chat || !form || !input || !messagesElement || !status || !sendButton) return;
 
   let messages = [];
@@ -15,25 +14,9 @@
     bubble.className = `chat-message chat-message-${role}${className ? ` ${className}` : ""}`;
     bubble.setAttribute("aria-label", role === "user" ? "Your message" : "Tutor reply");
     bubble.textContent = content;
-
-    const nearBottom =
-      messagesElement.scrollHeight - messagesElement.scrollTop - messagesElement.clientHeight < 100;
-
     messagesElement.append(bubble);
-    if (nearBottom || role === "user") {
-      messagesElement.scrollTop = messagesElement.scrollHeight;
-    }
-  }
-
-  function resetConversation() {
-    messages = [];
-    messagesElement.replaceChildren();
-    const welcome = document.createElement("p");
-    welcome.className = "tutor-welcome";
-    welcome.textContent = "What Python topic or exercise would you like help with? I’ll guide you with hints and clear steps.";
-    messagesElement.append(welcome);
-    status.textContent = "Conversation cleared. Ask a new question.";
-    input.focus();
+    messagesElement.scrollTop = messagesElement.scrollHeight;
+    return bubble;
   }
 
   form.addEventListener("submit", async (event) => {
@@ -45,14 +28,17 @@
     input.value = "";
     input.disabled = true;
     sendButton.disabled = true;
-    status.textContent = "The tutor is thinking…";
+    status.textContent = "The tutor is typing…";
 
     const requestMessages = [
       ...messages.slice(-10),
       { role: "user", content: question },
     ];
+
+    const assistantBubble = appendMessage("assistant", "");
+    
     try {
-      const response = await fetch("/api/tutor", {
+      const response = await fetch("/api/tutor/stream", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -63,16 +49,30 @@
           lesson_id: chat.dataset.lessonId || null,
         }),
       });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "The tutor could not reply.");
 
-      appendMessage("assistant", result.reply);
-      messages = [...requestMessages, { role: "assistant", content: result.reply }].slice(-12);
-      status.textContent = "You can ask a follow-up or start a new conversation.";
+      if (!response.ok) throw new Error("Stream failed");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        fullReply += chunk;
+        assistantBubble.textContent = fullReply;
+        messagesElement.scrollTop = messagesElement.scrollHeight;
+      }
+
+      messages = [...requestMessages, { role: "assistant", content: fullReply }].slice(-12);
+      status.textContent = "You can ask a follow-up.";
+
     } catch (error) {
-      appendMessage("assistant", error.message || "The tutor could not reply.", "chat-message-error");
-      input.value = question;
-      status.textContent = "Your question was not saved to the conversation. Please try again.";
+      assistantBubble.textContent = "Something went wrong. Please try again.";
+      assistantBubble.classList.add("chat-message-error");
+      status.textContent = "Your question was not saved. Please try again.";
     } finally {
       input.disabled = false;
       sendButton.disabled = false;
@@ -86,6 +86,4 @@
       form.requestSubmit();
     }
   });
-
-  clearButton?.addEventListener("click", resetConversation);
 })();

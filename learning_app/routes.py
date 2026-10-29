@@ -490,7 +490,7 @@ def logout():
     session.clear()
     session["learner_id"] = secrets.token_urlsafe(24)
     flash("Signed out.", "success")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.login"))
 
 
 @bp.get("/admin/login")
@@ -683,6 +683,41 @@ def mark_exercise_complete(exercise_id):
         g.current_user["id"], exercise_id, exercise["lesson_id"],
     )
     return {"ok": True, "exercise_id": exercise_id}
+
+
+
+@bp.post("/api/tutor/stream")
+@login_required
+def api_tutor_stream():
+    from flask import Response, stream_with_context
+    from .ai_service import stream_tutor_reply
+    
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return {"error": "Invalid payload"}, 400
+
+    messages = payload.get("messages", [])
+    lesson_id = payload.get("lesson_id")
+    
+    # Build the system message
+    lesson = None
+    if lesson_id:
+        lesson = get_db().execute(
+            "SELECT l.title, l.content, m.title AS module_title FROM lessons l JOIN modules m ON m.id = l.module_id WHERE l.id = ?",
+            (lesson_id,)
+        ).fetchone()
+
+    system_msg = build_tutor_system_message(lesson)
+    
+    # Prepare messages for the API
+    api_messages = [{"role": "system", "content": system_msg}] + messages
+    
+    # Return the streaming response
+    return Response(
+        stream_with_context(stream_tutor_reply(api_messages)),
+        mimetype="text/plain"
+    )
+
 
 
 @bp.post("/api/tutor")
@@ -917,8 +952,8 @@ def reset_password(token):
     return render_template("reset_password.html")
 
 
-@login_required
 @bp.get("/")
+@login_required
 def index():
     db = get_db()
     modules = db.execute(
@@ -941,8 +976,8 @@ def index():
     )
 
 
-@login_required
 @bp.get("/modules/<slug>")
+@login_required
 def module_detail(slug):
     module = get_module_or_404(slug)
     lessons = get_db().execute(
@@ -959,8 +994,8 @@ def module_detail(slug):
     )
 
 
-@login_required
 @bp.get("/lessons/<int:lesson_id>")
+@login_required
 def lesson_detail(lesson_id):
     lesson = get_db().execute(
         """
@@ -986,8 +1021,8 @@ def lesson_detail(lesson_id):
     )
 
 
-@login_required
 @bp.get("/python-runner")
+@login_required
 def python_runner():
     return render_template("python_runner.html")
 
@@ -1016,7 +1051,7 @@ def admin_logout():
     session.clear()
     session["learner_id"] = secrets.token_urlsafe(24)
     flash("Signed out.", "success")
-    return redirect(url_for("main.index"))
+    return redirect(url_for("main.login"))
 
 
 @bp.get("/admin")
@@ -1269,4 +1304,3 @@ def edit_lesson(lesson_id):
         modules=modules,
         lesson_exercises="\n".join(parse_exercises(lesson["exercise"])),
     )
-
