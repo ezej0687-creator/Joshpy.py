@@ -693,6 +693,8 @@ def python_runner():
 
 @bp.post("/lessons/<int:lesson_id>/complete")
 @login_required
+@bp.post("/lessons/<int:lesson_id>/complete")
+@login_required
 def mark_complete(lesson_id):
     db = get_db()
     if db.execute("SELECT 1 FROM lessons WHERE id = ?", (lesson_id,)).fetchone() is None:
