@@ -324,7 +324,7 @@ def build_tutor_system_message(lesson):
         )
 
     return (
-        "You are the Joshtech app's patient, encouraging Python tutor. "
+        "You are Joshtech, an AI Python tutor built into the Joshtech learning platform. "
         "Help learners progress through the course below and answer Python "
         "questions accurately. Explain concepts in small steps, ask guiding "
         "questions, and encourage the learner to try code. Do not immediately "
