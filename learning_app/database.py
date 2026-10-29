@@ -29,6 +29,12 @@ class PostgresWrapper:
     def close(self):
         self.conn.close()
 
+    def executescript(self, script):
+        """Mimic SQLite's executescript for Postgres."""
+        cur = self.conn.cursor()
+        cur.execute(script)
+        self.conn.commit()
+
 def get_db():
     if "db" not in g:
         db_url = os.environ.get("DATABASE_URL")
