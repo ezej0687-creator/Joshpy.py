@@ -914,6 +914,7 @@ def reset_password(token):
     return render_template("reset_password.html")
 
 
+@login_required
 @bp.get("/")
 def index():
     db = get_db()
@@ -937,6 +938,7 @@ def index():
     )
 
 
+@login_required
 @bp.get("/modules/<slug>")
 def module_detail(slug):
     module = get_module_or_404(slug)
@@ -954,6 +956,7 @@ def module_detail(slug):
     )
 
 
+@login_required
 @bp.get("/lessons/<int:lesson_id>")
 def lesson_detail(lesson_id):
     lesson = get_db().execute(
@@ -980,6 +983,7 @@ def lesson_detail(lesson_id):
     )
 
 
+@login_required
 @bp.get("/python-runner")
 def python_runner():
     return render_template("python_runner.html")
